@@ -1,0 +1,448 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Zap, User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Ticket, Users } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export const RegisterPage: React.FC = () => {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    couponCode: '',
+    referralCode: '',
+  });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    username?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    couponCode?: string;
+  }>({});
+  const [passwordStrength, setPasswordStrength] = useState(0);
+
+  // Get referral code from URL if present
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref');
+    if (ref) {
+      setFormData(prev => ({ ...prev, referralCode: ref }));
+    }
+  }, []);
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    }
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    if (!formData.couponCode.trim()) {
+      newErrors.couponCode = 'Coupon code is required for signup';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const calculatePasswordStrength = (password: string) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (/[A-Z]/.test(password)) strength += 25;
+    if (/[0-9]/.test(password)) strength += 25;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+    return strength;
+  };
+
+  const handlePasswordChange = (password: string) => {
+    setFormData(prev => ({ ...prev, password }));
+    setPasswordStrength(calculatePasswordStrength(password));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Check if referral code is valid and give N300 reward to referrer
+      let referralReward = 0;
+      if (formData.referralCode.trim()) {
+        referralReward = 300; // N300 for successful referral
+        toast.success(`Referral code applied! You'll get extra benefits.`);
+      }
+      
+      // Create new user with 500 bonus points + referral reward
+      const basePoints = 500;
+      const totalPoints = basePoints + referralReward;
+      
+      localStorage.setItem('token', 'demo-token-new');
+      localStorage.setItem('user', JSON.stringify({
+        id: `user-${Date.now()}`,
+        username: formData.username,
+        email: formData.email,
+        points: totalPoints,
+        pokesSent: 0,
+        pokesReceived: 0,
+        streak: 0,
+        rank: 999,
+        isOnline: true,
+        couponCode: formData.couponCode,
+        referralCode: formData.referralCode || null,
+      }));
+      
+      localStorage.setItem('wallet', JSON.stringify({
+        balance: totalPoints,
+        totalEarned: totalPoints,
+      }));
+      
+      // Store coupon usage
+      localStorage.setItem('usedCoupons', JSON.stringify([formData.couponCode]));
+      
+      if (referralReward > 0) {
+        toast.success(`Account created! ${totalPoints} points added! (500 signup + ${referralReward} referral bonus) ���`, {
+          duration: 5000,
+        });
+      } else {
+        toast.success(`Account created successfully! 500 bonus points added! ���`, {
+          duration: 4000,
+        });
+      }
+      
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
+      
+    } catch (error) {
+      toast.error('Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength < 50) return 'bg-red-500';
+    if (passwordStrength < 75) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const getPasswordStrengthText = () => {
+    if (passwordStrength < 50) return 'Weak';
+    if (passwordStrength < 75) return 'Medium';
+    return 'Strong';
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-4">
+      <div className="w-full max-w-md">
+        {/* Logo & Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl mb-4 shadow-lg">
+            <Zap className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Join POKEDOT</h1>
+          <p className="text-gray-600">Create your account</p>
+          <div className="mt-4 inline-flex items-center space-x-2 bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-200">
+            <CheckCircle className="w-4 h-4" />
+            <span className="font-bold">500 points signup bonus!</span>
+          </div>
+        </div>
+
+        {/* Register Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Create your account</h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Username */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <User className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.username ? 'text-primary-500' : 'text-gray-400'}`} />
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, username: e.target.value }));
+                    setErrors(prev => ({ ...prev, username: undefined }));
+                  }}
+                  className={`input-field pl-10 ${errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.username ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  placeholder="Choose a username"
+                />
+              </div>
+              {errors.username && (
+                <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.username}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.email ? 'text-primary-500' : 'text-gray-400'}`} />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, email: e.target.value }));
+                    setErrors(prev => ({ ...prev, email: undefined }));
+                  }}
+                  className={`input-field pl-10 ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.email ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  placeholder="you@example.com"
+                />
+              </div>
+              {errors.email && (
+                <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.email}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Coupon Code - REQUIRED */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Coupon Code <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Ticket className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.couponCode ? 'text-primary-500' : 'text-gray-400'}`} />
+                <input
+                  type="text"
+                  value={formData.couponCode}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, couponCode: e.target.value }));
+                    setErrors(prev => ({ ...prev, couponCode: undefined }));
+                  }}
+                  className={`input-field pl-10 ${errors.couponCode ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.couponCode ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  placeholder="Enter your coupon code"
+                />
+              </div>
+              {errors.couponCode && (
+                <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.couponCode}</span>
+                </div>
+              )}
+              <p className="text-sm text-gray-500 mt-2">
+                Coupon code is required for signup. Get one from the admin.
+              </p>
+            </div>
+
+            {/* Referral Code (Optional) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Referral Code (Optional)
+              </label>
+              <div className="relative">
+                <Users className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.referralCode ? 'text-primary-500' : 'text-gray-400'}`} />
+                <input
+                  type="text"
+                  value={formData.referralCode}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, referralCode: e.target.value }));
+                  }}
+                  className={`input-field pl-10 ${formData.referralCode ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  placeholder="Enter referral code"
+                />
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Get N300 bonus when someone uses your referral code!
+              </p>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.password ? 'text-primary-500' : 'text-gray-400'}`} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => {
+                    handlePasswordChange(e.target.value);
+                    setErrors(prev => ({ ...prev, password: undefined }));
+                  }}
+                  className={`input-field pl-10 pr-10 ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.password ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              
+              {/* Password Strength */}
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">Password strength:</span>
+                    <span className={`font-medium ${
+                      passwordStrength < 50 ? 'text-red-600' :
+                      passwordStrength < 75 ? 'text-yellow-600' : 'text-green-600'
+                    }`}>
+                      {getPasswordStrengthText()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                      style={{ width: `${passwordStrength}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span>At least 8 characters</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${/[A-Z]/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span>One uppercase letter</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${/[0-9]/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span>One number</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {errors.password && (
+                <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.password}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.confirmPassword ? 'text-primary-500' : 'text-gray-400'}`} />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
+                    setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+                  }}
+                  className={`input-field pl-10 pr-10 ${errors.confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.confirmPassword ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.confirmPassword}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Terms */}
+            <div className="flex items-start">
+              <input
+                type="checkbox"
+                id="terms"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1"
+                required
+              />
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+                I agree to the{' '}
+                <a href="#" className="text-primary-600 hover:text-primary-500 font-medium">Terms of Service</a>{' '}
+                and{' '}
+                <a href="#" className="text-primary-600 hover:text-primary-500 font-medium">Privacy Policy</a>
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full py-3 flex items-center justify-center space-x-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Creating account...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" />
+                  <span>Create Account</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Sign In Link */}
+          <div className="text-center mt-8 pt-6 border-t">
+            <p className="text-gray-600">
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                className="text-primary-600 hover:text-primary-500 font-semibold"
+              >
+                Sign in here
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-sm text-gray-500">
+            POKEDOT © {new Date().getFullYear()} • Poke-to-Earn Platform
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
