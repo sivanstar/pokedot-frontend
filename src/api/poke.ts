@@ -1,37 +1,32 @@
-import { api } from './index';
-
-export interface PokeResponse {
-  success: boolean;
-  message: string;
-  pointsEarned: number;
-  cooldown?: number;
-}
-
-export interface User {
-  id: string;
-  username: string;
-  points: number;
-  pokesSent: number;
-  pokesReceived: number;
-  streak: number;
-  rank: number;
-  isOnline: boolean;
-}
+import api from './index';
 
 export const pokeApi = {
-  // Send a poke to another user
-  sendPoke: (userId: string) => 
-    api.post<PokeResponse>(`/users/${userId}/poke`),
-  
-  // Get list of users you can poke
-  getAvailableUsers: (search?: string) => 
-    api.get<{ users: User[] }>('/users/available', { params: { search } }),
-  
-  // Get poke history
-  getPokeHistory: () => 
-    api.get<{ pokes: any[] }>('/users/me/pokes'),
-  
-  // Get user details
-  getUser: (userId: string) => 
-    api.get<User>(`/users/${userId}`),
+  // Get available users to poke
+  getAvailableUsers: async (search?: string, page = 1, limit = 20) => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    
+    const response = await api.get(`/users/available?${params}`);
+    return response.data;
+  },
+
+  // Send poke to user
+  sendPoke: async (userId: string, adTaskId: string = 'demo-ad-task-id') => {
+    const response = await api.post(`/poke/users/${userId}/poke`, { adTaskId });
+    return response.data;
+  },
+
+  // Get daily limits
+  getDailyLimits: async () => {
+    const response = await api.get('/users/daily-limits');
+    return response.data;
+  },
+
+  // Get leaderboard
+  getLeaderboard: async (page = 1, limit = 50) => {
+    const response = await api.get(`/users/leaderboard?page=${page}&limit=${limit}`);
+    return response.data;
+  }
 };

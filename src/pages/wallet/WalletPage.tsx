@@ -16,10 +16,12 @@ export const WalletPage: React.FC = () => {
   const { 
     balance, 
     totalEarned, 
+    totalWithdrawn,
     transactions, 
     withdrawPoints, 
-    refreshWallet,
-    canWithdrawToday
+    refreshBalance,
+    canWithdrawToday,
+    syncWalletFromBackend
   } = useWallet();
   
   const { addNotification } = useNotifications();
@@ -34,6 +36,13 @@ export const WalletPage: React.FC = () => {
     isWithinWindow: false
   });
 
+  // CRITICAL: Sync wallet data on component mount
+  useEffect(() => {
+    if (syncWalletFromBackend) {
+      syncWalletFromBackend();
+    }
+  }, [syncWalletFromBackend]);
+
   // Check if user has account details
   useEffect(() => {
     const accountDetails = localStorage.getItem('accountDetails');
@@ -44,7 +53,7 @@ export const WalletPage: React.FC = () => {
   useEffect(() => {
     const calculateNextWithdrawal = () => {
       const now = new Date();
-      const day = now.getDay(); // 0 = Sunday
+      const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
       const hour = now.getHours();
       
       const withdrawalDays = [1, 3, 5]; // Monday, Wednesday, Friday
@@ -52,7 +61,7 @@ export const WalletPage: React.FC = () => {
       const withdrawalHourEnd = 17; // 5 PM
       
       // Check if currently within withdrawal window
-      const isWithinWindow = canWithdrawToday();
+      const isWithinWindow = canWithdrawToday ? canWithdrawToday() : false;
       
       // Find next withdrawal day
       let daysToAdd = 0;
@@ -111,21 +120,34 @@ export const WalletPage: React.FC = () => {
     }
 
     // Check withdrawal window
-    if (!canWithdrawToday()) {
+    if (!canWithdrawToday || !canWithdrawToday()) {
       toast.error(`Withdrawals only allowed on Monday, Wednesday, Friday from 4pm-5pm. Next window: ${withdrawalSchedule.nextWithdrawalDay} 4pm-5pm`);
       return;
     }
 
     setIsWithdrawing(true);
-    const success = await withdrawPoints(amount);
-    if (success) {
-      setWithdrawAmount('');
-      toast.success(`Withdrawal request submitted for ${amount.toLocaleString()} points!`, {
-        duration: 4000,
-        icon: '✅',
-      });
+    
+    try {
+      // Call the withdrawal function from WalletContext
+      const success = await withdrawPoints(amount);
+      
+      if (success) {
+        setWithdrawAmount('');
+        toast.success(`Withdrawal request submitted for ${amount.toLocaleString()} points!`, {
+          duration: 4000,
+          icon: '✅',
+        });
+        
+        // Refresh wallet data after successful withdrawal
+        if (refreshBalance) {
+          await refreshBalance();
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to submit withdrawal request. Please try again.');
+    } finally {
+      setIsWithdrawing(false);
     }
-    setIsWithdrawing(false);
   };
 
   const getTransactionIcon = (type: string) => {
@@ -139,7 +161,7 @@ export const WalletPage: React.FC = () => {
       case 'deposit':
         return <ArrowDownRight className="w-4 h-4 text-green-500" />;
       case 'referral':
-        return <Users className="w-4 h-4 text-purple-500" />;
+        return <CreditCard className="w-4 h-4 text-purple-500" />;
       default:
         return <CreditCard className="w-4 h-4 text-gray-500" />;
     }
@@ -227,10 +249,19 @@ export const WalletPage: React.FC = () => {
                     <span className="text-lg opacity-90">points</span>
                   </div>
                   <p className="opacity-90 mt-4">Available for withdrawal</p>
+                  <div className="mt-2 text-sm opacity-80">
+                    Total Earned: {totalEarned.toLocaleString()} points • 
+                    Total Withdrawn: {totalWithdrawn.toLocaleString()} points
+                  </div>
                 </div>
                 <div className="flex flex-col items-end">
                   <button
-                    onClick={refreshWallet}
+                    onClick={() => {
+                      if (refreshBalance) {
+                        refreshBalance();
+                        toast.success('Wallet refreshed!');
+                      }
+                    }}
                     className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -245,7 +276,7 @@ export const WalletPage: React.FC = () => {
             </div>
 
             {/* Withdrawal Card */}
-            <div className="card">
+            <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 text-white">
                   <Upload className="w-5 h-5" />
@@ -366,7 +397,7 @@ export const WalletPage: React.FC = () => {
           {/* Right Column - Stats & Recent */}
           <div className="space-y-8">
             {/* Stats Card */}
-            <div className="card">
+            <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold mb-4 text-gray-800">Wallet Stats</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -411,7 +442,7 @@ export const WalletPage: React.FC = () => {
             </div>
 
             {/* Recent Transactions */}
-            <div className="card">
+            <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-800">Recent Transactions</h3>
                 <button

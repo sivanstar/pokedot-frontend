@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  _id: string;
   username: string;
   email: string;
   avatar?: string;
@@ -8,10 +9,13 @@ export interface User {
   pokesSent: number;
   pokesReceived: number;
   streak: number;
+  loginStreak: number;
   rank: number;
   createdAt: string;
   updatedAt: string;
   isOnline?: boolean;
+  totalEarned: number;
+  totalWithdrawn: number;
 }
 
 export interface Poke {
@@ -33,6 +37,7 @@ export interface LeaderboardEntry {
   pokesReceived: number;
   rank: number;
   streak: number;
+  loginStreak: number;
   isOnline?: boolean;
 }
 

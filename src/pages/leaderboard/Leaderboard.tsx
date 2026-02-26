@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Medal, Crown, TrendingUp, Clock, Calendar, Star } from 'lucide-react';
+import { Trophy, Medal, Crown, TrendingUp, Clock, Calendar, Star, Zap } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 
 export const Leaderboard: React.FC = () => {
@@ -131,13 +131,14 @@ export const Leaderboard: React.FC = () => {
                               rank
                             )} flex items-center justify-center text-white font-bold`}
                           >
-                            {leader.username.charAt(0)}
+                            {leader.username?.charAt(0).toUpperCase() || 'U'}
                           </div>
                           <div>
                             <p className="font-semibold">{leader.username}</p>
                             {rank === 1 && (
-                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                                í¿† Top Poker
+                              <span className="inline-flex items-center text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                <Trophy className="w-3 h-3 mr-1" />
+                                Top Poker
                               </span>
                             )}
                           </div>
@@ -145,27 +146,27 @@ export const Leaderboard: React.FC = () => {
                       </td>
                       <td className="py-4 px-6">
                         <div className="font-bold text-lg">
-                          {leader.points.toLocaleString()}
+                          {leader.points?.toLocaleString() || 0}
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <span className="font-semibold">{leader.pokesSent}</span>
+                          <span className="font-semibold">{leader.pokesSent || 0}</span>
                           <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-                          <span className="text-gray-600">{leader.pokesReceived}</span>
+                          <span className="text-gray-600">{leader.pokesReceived || 0}</span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white">
-                            {leader.streak}
+                          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {leader.streak || 0}
                           </div>
                           <span className="text-gray-600">days</span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <div className={`w-3 h-3 rounded-full ${leader.isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                          <div className={`w-3 h-3 rounded-full ${leader.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
                           <span className="text-gray-600">{leader.isOnline ? 'Online' : 'Offline'}</span>
                         </div>
                       </td>
@@ -176,6 +177,14 @@ export const Leaderboard: React.FC = () => {
             </table>
           </div>
         </div>
+
+        {leaders.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Leaderboard Data</h3>
+            <p className="text-gray-500">Be the first to start poking and climb the ranks!</p>
+          </div>
+        )}
       </div>
     </div>
   );

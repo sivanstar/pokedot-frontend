@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, Check, Eye, AlertCircle, Users, Lock } from 'lucide-react';
+import { Zap, Clock, Check, Eye, AlertCircle, Lock } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationsContext';
 import { useWallet } from '../../context/WalletContext';
 import { usePoke } from '../../context/PokeContext';
+import { pokeApi } from '../../api/poke';
 import toast from 'react-hot-toast';
-import { getDailyPokes, incrementPokesSent, getRemainingPokes, incrementPokesReceived } from '../../utils/dailyPokes';
 
 interface PokeButtonProps {
   userId: string;
@@ -12,6 +12,7 @@ interface PokeButtonProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'primary' | 'secondary' | 'ghost';
   onPokeSuccess?: (pointsEarned: number) => void;
+  onPokeError?: (error: any) => void;
 }
 
 export const PokeButton: React.FC<PokeButtonProps> = ({
@@ -20,19 +21,18 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
   size = 'md',
   variant = 'primary',
   onPokeSuccess,
+  onPokeError,
 }) => {
   const [isPoking, setIsPoking] = useState(false);
-  const [cooldown, setCooldown] = useState<number | null>(null);
   const [showAdModal, setShowAdModal] = useState(false);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
   const [adCompleted, setAdCompleted] = useState(false);
-  const [pokeStatus, setPokeStatus] = useState<'available' | 'poked' | 'limit_reached' | 'already_received'>('available');
   const { addNotification } = useNotifications();
-  const { addTransaction } = useWallet();
-  const { updateUserPoints, incrementPokesSent: incrementContextPokes, incrementPokesReceived: incrementContextReceived } = usePoke();
+  const { addTransaction, syncWalletFromBackend } = useWallet();
+  const { sendPoke, dailyLimits, getDailyLimits, syncUserFromBackend } = usePoke();
 
-  // AD URL
-  const AD_URL = 'https://otieu.com/4/10381267';
+  // AD URL - Can be configured in .env
+  const AD_URL = 'https://otieu.com/4/10381267'; // Replace with actual ad URL
 
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
@@ -46,57 +46,42 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
     ghost: 'bg-transparent text-primary-600 hover:bg-primary-50',
   };
 
-  // Check poke status on mount and when userId changes
+  // Validate userId is not undefined
   useEffect(() => {
-    checkPokeStatus();
+    if (!userId) {
+      console.error('PokeButton: userId is undefined!');
+      toast.error('Cannot poke: User ID is missing');
+    }
   }, [userId]);
 
-  const checkPokeStatus = () => {
-    const dailyRecord = getDailyPokes();
-    
-    // Check if already poked this user today
-    if (dailyRecord.pokedUsers.includes(userId)) {
-      setPokeStatus('poked');
-      return;
-    }
-    
-    // Check if daily send limit reached
-    if (dailyRecord.pokesSent >= 2) {
-      setPokeStatus('limit_reached');
-      return;
-    }
-    
-    // Check if already received from this user today
-    if (dailyRecord.receivedFrom.includes(userId)) {
-      setPokeStatus('already_received');
-      return;
-    }
-    
-    setPokeStatus('available');
-  };
-
   const openAdWindow = () => {
+    if (!userId) {
+      toast.error('Cannot poke: User ID is missing');
+      return;
+    }
+    
     // Open ad in new window
     const adWindow = window.open(AD_URL, '_blank', 'width=800,height=600');
     
     if (!adWindow) {
-      toast.error('Please allow popups to view ads');
+      toast.error('Please allow popups to watch ads');
       return;
     }
     
     setIsWatchingAd(true);
     
-    // Simulate ad watching with timeout (in real app, you'd use postMessage or other methods)
-    setTimeout(() => {
+    // Simulate 5 second ad watching (in production, you'd use postMessage)
+    const adTimer = setTimeout(() => {
       setIsWatchingAd(false);
       setAdCompleted(true);
-      toast.success('Ad completed! You can now poke.');
-    }, 5000); // Simulate 5 second ad
+      toast.success('Ad completed! You can now poke.', { duration: 2000 });
+    }, 5000);
     
-    // Check if window is closed
+    // Check if window closed
     const checkClosed = setInterval(() => {
       if (adWindow.closed) {
         clearInterval(checkClosed);
+        clearTimeout(adTimer);
         setIsWatchingAd(false);
         if (!adCompleted) {
           toast.error('Please complete the ad to poke');
@@ -105,36 +90,15 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
     }, 1000);
   };
 
-  const simulatePoke = async (): Promise<{ success: boolean; pointsEarned: number; cooldown?: number }> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Simulate 90% success rate
-    const isSuccess = Math.random() > 0.1;
-    
-    if (isSuccess) {
-      const pointsEarned = 50; // Fixed 50 points per poke
-      // Simulate 20% chance of cooldown
-      const hasCooldown = Math.random() > 0.8;
-      const cooldown = hasCooldown ? Math.floor(Math.random() * 30) + 10 : undefined; // 10-40 seconds
-      
-      return { success: true, pointsEarned, cooldown };
-    } else {
-      // Simulate different failure reasons
-      const reasons = [
-        'User has reached their daily poke limit',
-        'You have already poked this user recently',
-        'User is currently offline',
-        'Network error, please try again',
-      ];
-      throw new Error(reasons[Math.floor(Math.random() * reasons.length)]);
-    }
-  };
-
   const handlePoke = async () => {
-    if (isPoking || cooldown || pokeStatus !== 'available') return;
+    if (isPoking || dailyLimits.remainingSends <= 0) return;
     
-    // Show ad modal first
+    if (!userId) {
+      toast.error('Cannot poke: User ID is missing');
+      return;
+    }
+    
+    // Show ad modal first (critical business rule)
     setShowAdModal(true);
   };
 
@@ -142,83 +106,97 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
     setShowAdModal(false);
     setAdCompleted(false);
     
-    // Check daily limits again (in case changed during ad watching)
-    const canSend = incrementPokesSent(userId);
-    if (!canSend) {
-      const remaining = getRemainingPokes();
-      toast.error(`You can only poke 2 users per day. ${remaining.remainingSends} pokes remaining.`);
-      checkPokeStatus();
+    if (!userId) {
+      toast.error('Cannot poke: User ID is missing');
+      return;
+    }
+    
+    if (dailyLimits.remainingSends <= 0) {
+      toast.error(`Daily limit reached! You can only poke 2 users per day.`);
       return;
     }
     
     setIsPoking(true);
     
     try {
-      const result = await simulatePoke();
+      // Generate a unique ad task ID (in production, get from ad network)
+      const adTaskId = `ad_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      if (result.success) {
-        // Update user points in PokeContext
-        updateUserPoints(result.pointsEarned);
+      // Call real API to send poke
+      const response = await sendPoke(userId, adTaskId);
+      
+      if (response.success) {
+        // CRITICAL: Sync wallet data from backend immediately
+        if (syncWalletFromBackend) {
+          await syncWalletFromBackend();
+        }
         
-        // Update pokes sent count
-        incrementContextPokes();
+        // CRITICAL: Sync user data from backend
+        if (syncUserFromBackend) {
+          await syncUserFromBackend();
+        }
         
-        // Add points transaction to wallet
-        addTransaction('poke', result.pointsEarned, `Poked ${username} (ad completed)`);
+        // Show success message
+        toast.success(`Poked ${username}! +50 points earned`, {
+          icon: '⚡',
+          duration: 3000,
+        });
         
         // Add notification
         addNotification({
           userId: '1',
           type: 'poke',
           title: 'Poke Successful!',
-          message: `You poked ${username} and earned ${result.pointsEarned} points!`
+          message: `You poked ${username} and earned 50 points!`
         });
         
-        // Show success toast
-        toast.success(`Successfully poked ${username}! +${result.pointsEarned} points`, {
-          icon: '⚡',
-          duration: 3000,
+        // Add transaction to wallet
+        addTransaction({
+          id: `tx_${Date.now()}`,
+          type: 'poke',
+          amount: 50,
+          description: `Poked ${username}`,
+          timestamp: new Date().toISOString(),
+          status: 'completed'
         });
         
-        // Set cooldown if applicable
-        if (result.cooldown) {
-          setCooldown(result.cooldown);
-          const interval = setInterval(() => {
-            setCooldown(prev => {
-              if (prev && prev > 1) {
-                return prev - 1;
-              } else {
-                clearInterval(interval);
-                return null;
-              }
-            });
-          }, 1000);
-        }
+        // Refresh daily limits
+        await getDailyLimits();
         
-        // Update poke status
-        setPokeStatus('poked');
-        
-        // Call success callback
+        // Call success callback if provided
         if (onPokeSuccess) {
-          onPokeSuccess(result.pointsEarned);
+          onPokeSuccess(50);
         }
       }
     } catch (error: any) {
-      // Show error toast
-      toast.error(error.message || 'Failed to send poke. Please try again.', {
-        duration: 4000,
-      });
+      console.error('Poke error:', error);
+      
+      // Handle specific error messages from backend
+      if (error.response?.data?.message) {
+        const errorMsg = error.response.data.message;
+        toast.error(errorMsg, { duration: 4000 });
+        
+        // Special handling for common errors
+        if (errorMsg.includes('Daily send limit reached')) {
+          // Refresh limits to get accurate count
+          await getDailyLimits();
+        }
+      } else {
+        toast.error('Failed to send poke. Please try again.', { duration: 4000 });
+      }
+      
+      // Call error callback if provided
+      if (onPokeError) {
+        onPokeError(error);
+      }
       
       // Add notification for failure
       addNotification({
         userId: '1',
         type: 'system',
         title: 'Poke Failed',
-        message: error.message || 'Could not poke user'
+        message: error.response?.data?.message || 'Could not poke user'
       });
-      
-      // Reset poke status
-      checkPokeStatus();
     } finally {
       setIsPoking(false);
     }
@@ -226,46 +204,24 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
 
   const handleSkipAd = () => {
     setShowAdModal(false);
-    toast.info('You must watch the ad to poke and earn points');
+    toast.info('You must watch an ad to poke and earn points');
   };
 
   const getButtonText = () => {
-    switch (pokeStatus) {
-      case 'poked':
-        return 'Poked Today';
-      case 'limit_reached':
-        return 'Daily Limit Reached';
-      case 'already_received':
-        return 'Already Received';
-      default:
-        return 'Poke for 50 points!';
+    if (dailyLimits.remainingSends <= 0) {
+      return 'Daily Limit Reached';
     }
+    return `Poke for 50 points!`;
   };
 
   const getButtonIcon = () => {
-    switch (pokeStatus) {
-      case 'poked':
-        return <Check className="w-4 h-4" />;
-      case 'limit_reached':
-        return <Lock className="w-4 h-4" />;
-      default:
-        return <Zap className="w-4 h-4" />;
+    if (dailyLimits.remainingSends <= 0) {
+      return <Lock className="w-4 h-4" />;
     }
+    return <Zap className="w-4 h-4" />;
   };
 
-  const isButtonDisabled = isPoking || cooldown || pokeStatus !== 'available';
-
-  if (cooldown) {
-    return (
-      <button
-        disabled
-        className={`${sizes[size]} ${variants[variant]} rounded-lg font-semibold flex items-center justify-center space-x-2 opacity-70 cursor-not-allowed`}
-      >
-        <Clock className="w-4 h-4" />
-        <span>{cooldown}s</span>
-      </button>
-    );
-  }
+  const isButtonDisabled = isPoking || dailyLimits.remainingSends <= 0 || !userId;
 
   return (
     <>
@@ -283,6 +239,9 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
           <>
             {getButtonIcon()}
             <span>{getButtonText()}</span>
+            {dailyLimits.remainingSends > 0 && (
+              <span className="text-xs opacity-80">({dailyLimits.remainingSends} left)</span>
+            )}
           </>
         )}
       </button>
@@ -311,7 +270,7 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
               
               <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 mb-4">
                 <AlertCircle className="w-4 h-4" />
-                <span>You can only poke 2 users per day</span>
+                <span>Daily limit: 2 pokes • Remaining: {dailyLimits.remainingSends}</span>
               </div>
               
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">

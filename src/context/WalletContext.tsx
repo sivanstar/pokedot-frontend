@@ -1,25 +1,28 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useNotifications } from './NotificationsContext';
+import { walletApi } from '../api/wallet';
 
 interface Transaction {
   id: string;
-  type: 'poke' | 'reward' | 'withdrawal' | 'bonus' | 'signup' | 'referral';
+  type: string;
   amount: number;
   description: string;
   timestamp: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: string;
 }
 
 interface WalletContextType {
   balance: number;
   totalEarned: number;
+  totalWithdrawn: number;
   transactions: Transaction[];
-  addTransaction: (type: Transaction['type'], amount: number, description: string) => void;
-  withdrawPoints: (amount: number) => Promise<boolean>;
-  addSignupBonus: () => void;
-  addReferralBonus: (referrerId: string, referredUsername: string) => void;
-  refreshWallet: () => void;
+  bankDetails: any;
+  withdrawalInfo: any;
+  refreshBalance: () => Promise<void>;
+  requestWithdrawal: (amount: number) => Promise<any>;
+  updateBankDetails: (details: any) => Promise<any>;
+  addTransaction: (transaction: Transaction) => void;
   canWithdrawToday: () => boolean;
+  syncWalletFromBackend: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -37,216 +40,108 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  const { addNotification } = useNotifications();
-  
-  // Load initial data from localStorage or use defaults
-  const getInitialBalance = () => {
-    const saved = localStorage.getItem('wallet');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.balance || 12500;
-      } catch {
-        return 12500;
+  const [balance, setBalance] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [totalWithdrawn, setTotalWithdrawn] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [bankDetails, setBankDetails] = useState<any>(null);
+  const [withdrawalInfo, setWithdrawalInfo] = useState<any>(null);
+
+  const syncWalletFromBackend = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await walletApi.getBalance();
+      if (response.success) {
+        setBalance(response.balance);
+        setTotalEarned(response.totalEarned || 0);
+        setTotalWithdrawn(response.totalWithdrawn || 0);
+        setBankDetails(response.bankDetails);
+        setWithdrawalInfo(response.withdrawalInfo);
       }
+    } catch (error) {
+      console.error('Error syncing wallet:', error);
     }
-    return 12500;
   };
 
-  const getInitialTotalEarned = () => {
-    const saved = localStorage.getItem('wallet');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.totalEarned || 15600;
-      } catch {
-        return 15600;
-      }
+  const loadWalletData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      await syncWalletFromBackend();
+    } catch (error) {
+      console.error('Error loading wallet:', error);
     }
-    return 15600;
   };
 
-  const [balance, setBalance] = useState(getInitialBalance);
-  const [totalEarned, setTotalEarned] = useState(getInitialTotalEarned);
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      type: 'poke',
-      amount: 50,
-      description: 'Poked ZapZap',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      status: 'completed'
-    },
-    {
-      id: '2',
-      amount: 50,
-      type: 'reward',
-      description: 'Daily login bonus',
-      timestamp: new Date(Date.now() - 7200000).toISOString(),
-      status: 'completed'
-    },
-    {
-      id: '3',
-      amount: 100,
-      type: 'bonus',
-      description: 'Weekly streak bonus',
-      timestamp: new Date(Date.now() - 86400000).toISOString(),
-      status: 'completed'
-    },
-    {
-      id: '4',
-      amount: -5000,
-      type: 'withdrawal',
-      description: 'Withdrawal request',
-      timestamp: new Date(Date.now() - 172800000).toISOString(),
-      status: 'pending'
-    },
-    {
-      id: '5',
-      amount: 500,
-      type: 'signup',
-      description: 'Welcome bonus',
-      timestamp: new Date(Date.now() - 259200000).toISOString(),
-      status: 'completed'
-    }
-  ]);
+  useEffect(() => {
+    loadWalletData();
+    
+    // Set up periodic sync every 30 seconds
+    const syncInterval = setInterval(() => {
+      if (localStorage.getItem('token')) {
+        syncWalletFromBackend();
+      }
+    }, 30000);
+    
+    return () => clearInterval(syncInterval);
+  }, []);
 
-  // Check withdrawal days and times (Mon, Wed, Fri, 4pm-5pm)
+  const refreshBalance = async () => {
+    await syncWalletFromBackend();
+  };
+
+  const requestWithdrawal = async (amount: number) => {
+    try {
+      const response = await walletApi.requestWithdrawal(amount);
+      if (response.success) {
+        await syncWalletFromBackend();
+        
+        const transaction: Transaction = {
+          id: `tx-${Date.now()}`,
+          type: 'withdrawal',
+          amount: -amount,
+          description: `Withdrawal request: ${response.reference || 'N/A'}`,
+          timestamp: new Date().toISOString(),
+          status: 'pending'
+        };
+        addTransaction(transaction);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error requesting withdrawal:', error);
+      throw error;
+    }
+  };
+
+  const updateBankDetails = async (details: any) => {
+    try {
+      const response = await walletApi.updateBankDetails(details);
+      if (response.success) {
+        setBankDetails(response.bankDetails);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error updating bank details:', error);
+      throw error;
+    }
+  };
+
+  const addTransaction = (transaction: Transaction) => {
+    setTransactions(prev => [transaction, ...prev.slice(0, 9)]);
+  };
+
   const canWithdrawToday = (): boolean => {
     const now = new Date();
-    const day = now.getDay(); // 0 = Sunday, 1 = Monday, 2 = Tuesday, etc.
+    const day = now.getDay();
     const hour = now.getHours();
     
-    // Check if it's Monday (1), Wednesday (3), or Friday (5)
     const isWithdrawalDay = day === 1 || day === 3 || day === 5;
-    
-    // Check if it's between 4 PM (16) and 5 PM (17)
     const isWithdrawalTime = hour >= 16 && hour < 17;
     
     return isWithdrawalDay && isWithdrawalTime;
-  };
-
-  // Save to localStorage when balance changes
-  useEffect(() => {
-    localStorage.setItem('wallet', JSON.stringify({
-      balance,
-      totalEarned,
-      lastUpdated: new Date().toISOString()
-    }));
-  }, [balance, totalEarned]);
-
-  const addTransaction = (type: Transaction['type'], amount: number, description: string) => {
-    const newTransaction: Transaction = {
-      id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      amount,
-      description,
-      timestamp: new Date().toISOString(),
-      status: type === 'withdrawal' ? 'pending' : 'completed'
-    };
-
-    setTransactions(prev => [newTransaction, ...prev]);
-    
-    // Update balance
-    setBalance(prev => prev + amount);
-    if (amount > 0) {
-      setTotalEarned(prev => prev + amount);
-    }
-
-    // Add notification for significant transactions
-    if (amount >= 50) {
-      addNotification({
-        userId: '1',
-        type: 'reward',
-        title: 'Points Earned!',
-        message: `You earned ${amount} points: ${description}`
-      });
-    }
-  };
-
-  const addSignupBonus = () => {
-    addTransaction('signup', 500, 'Welcome signup bonus');
-    addNotification({
-      userId: '1',
-      type: 'milestone',
-      title: 'Welcome Bonus!',
-      message: 'You received 500 points as a welcome bonus!'
-    });
-  };
-
-  const addReferralBonus = (referrerId: string, referredUsername: string) => {
-    addTransaction('referral', 300, `Referral bonus for ${referredUsername}`);
-    addNotification({
-      userId: '1',
-      type: 'milestone',
-      title: 'Referral Bonus!',
-      message: `You earned ₦300 for referring ${referredUsername}!`
-    });
-  };
-
-  const withdrawPoints = async (amount: number): Promise<boolean> => {
-    // Check minimum withdrawal (2,000 points) - CHANGED from 10,000
-    if (amount < 2000) {
-      addNotification({
-        userId: '1',
-        type: 'system',
-        title: 'Withdrawal Failed',
-        message: 'Minimum withdrawal is 2,000 points'
-      });
-      return false;
-    }
-
-    if (amount > balance) {
-      addNotification({
-        userId: '1',
-        type: 'system',
-        title: 'Withdrawal Failed',
-        message: 'Insufficient balance for withdrawal'
-      });
-      return false;
-    }
-
-    // Check withdrawal days and times
-    if (!canWithdrawToday()) {
-      addNotification({
-        userId: '1',
-        type: 'system',
-        title: 'Withdrawal Failed',
-        message: 'Withdrawals only allowed Mon, Wed, Fri, 4pm-5pm'
-      });
-      return false;
-    }
-
-    // Check if user has account details
-    const accountDetails = localStorage.getItem('accountDetails');
-    if (!accountDetails) {
-      addNotification({
-        userId: '1',
-        type: 'system',
-        title: 'Withdrawal Failed',
-        message: 'Please set your account details in Profile first'
-      });
-      return false;
-    }
-
-    // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        addTransaction('withdrawal', -amount, 'Withdrawal request');
-        addNotification({
-          userId: '1',
-          type: 'system',
-          title: 'Withdrawal Initiated',
-          message: `${amount.toLocaleString()} points withdrawal request submitted`
-        });
-        resolve(true);
-      }, 1500);
-    });
-  };
-
-  const refreshWallet = () => {
-    console.log('Refreshing wallet data...');
-    // In real app, this would fetch from API
   };
 
   return (
@@ -254,13 +149,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       value={{
         balance,
         totalEarned,
+        totalWithdrawn,
         transactions,
+        bankDetails,
+        withdrawalInfo,
+        refreshBalance,
+        requestWithdrawal,
+        updateBankDetails,
         addTransaction,
-        withdrawPoints,
-        addSignupBonus,
-        addReferralBonus,
-        refreshWallet,
-        canWithdrawToday
+        canWithdrawToday,
+        syncWalletFromBackend,
       }}
     >
       {children}

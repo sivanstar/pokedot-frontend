@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Zap, Trophy, Users, TrendingUp, 
@@ -10,6 +10,8 @@ import { useWallet } from '../../context/WalletContext';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { UserCard } from '../../components/dashboard/UserCard';
 import { formatDistanceToNow } from 'date-fns';
+import { pokeApi } from '../../api/poke';
+import toast from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
   const {
@@ -18,21 +20,65 @@ export const Dashboard: React.FC = () => {
     pokesSent,
     pokesReceived,
     streak,
-    recentPokes,
     topUsers,
     refreshData,
+    dailyLimits,
+    getAvailableUsers,
+    syncUserFromBackend,
   } = usePoke();
 
-  const { balance, totalEarned } = useWallet();
+  const { balance, totalEarned, syncWalletFromBackend } = useWallet();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // CRITICAL: Sync data on component mount
+  useEffect(() => {
+    const syncData = async () => {
+      if (syncUserFromBackend) {
+        await syncUserFromBackend();
+      }
+      if (syncWalletFromBackend) {
+        await syncWalletFromBackend();
+      }
+    };
+    syncData();
+  }, [syncUserFromBackend, syncWalletFromBackend]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    refreshData();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    try {
+      await refreshData();
+      if (syncWalletFromBackend) {
+        await syncWalletFromBackend();
+      }
+      toast.success('Dashboard refreshed!', { duration: 2000 });
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
   };
+
+  const loadAvailableUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await getAvailableUsers(searchQuery);
+      if (response.success) {
+        setAvailableUsers(response.users || []);
+      }
+    } catch (error) {
+      console.error('Error loading available users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAvailableUsers();
+  }, [searchQuery]);
 
   const stats = [
     { 
@@ -60,16 +106,16 @@ export const Dashboard: React.FC = () => {
       description: 'Total pokes sent' 
     },
     { 
-      title: 'Current Streak', 
-      value: `${streak} days`, 
+      title: 'Daily Pokes Remaining', 
+      value: `${dailyLimits.remainingSends}/${dailyLimits.remainingReceives}`,
       icon: <TrendingUp className="w-6 h-6" />, 
       color: 'from-purple-400 to-pink-500',
-      trend: 'í´¥',
-      description: 'Daily poke streak' 
+      trend: dailyLimits.remainingSends > 0 ? 'Available' : 'Limit Reached',
+      description: 'Sends/Receives left today' 
     },
   ];
 
-  const filteredUsers = topUsers.filter(user =>
+  const filteredUsers = availableUsers.filter(user =>
     user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -82,9 +128,15 @@ export const Dashboard: React.FC = () => {
             <div>
               <div className="flex items-center space-x-3 mb-2">
                 <Sparkles className="w-6 h-6" />
-                <h1 className="text-2xl font-bold">Welcome back, {user?.username}! í¾‰</h1>
+                <h1 className="text-2xl font-bold">Welcome back, {user?.username}!</h1>
               </div>
               <p className="opacity-90">Ready to poke and earn more points today?</p>
+              <div className="mt-2 text-sm opacity-80">
+                Daily Limits: {dailyLimits.remainingSends} sends, {dailyLimits.remainingReceives} receives left
+              </div>
+              <div className="mt-1 text-sm">
+                Balance: <span className="font-bold">{balance.toLocaleString()} points</span>
+              </div>
             </div>
             <div className="flex space-x-3 mt-4 md:mt-0">
               <button
@@ -118,23 +170,6 @@ export const Dashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Rank Card - Using user's actual rank and points */}
-        <div className="bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl p-6 text-white mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Your Global Rank</h2>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-5xl font-bold">#{user?.rank}</span>
-                <span className="text-lg opacity-90">out of {topUsers.length.toLocaleString()} users</span>
-              </div>
-              <p className="mt-4 opacity-90">
-                Current Points: {points.toLocaleString()} â€¢ Position among top pokes
-              </p>
-            </div>
-            <Trophy className="w-24 h-24 opacity-50 hidden md:block" />
-          </div>
-        </div>
-
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
@@ -144,7 +179,7 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center space-x-2">
                   <Zap className="w-5 h-5" />
-                  <span>Quick Poke</span>
+                  <span>Quick Poke ({dailyLimits.remainingSends} sends left)</span>
                 </h3>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -158,7 +193,12 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
               
-              {filteredUsers.length === 0 ? (
+              {loadingUsers ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-500">Loading users...</p>
+                </div>
+              ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p>No users found</p>
@@ -174,10 +214,10 @@ export const Dashboard: React.FC = () => {
               ) : (
                 <div className="space-y-6">
                   {filteredUsers
-                    .filter(u => u.id !== user?.id) // Don't show current user
+                    .filter(u => u._id !== user?._id)
                     .slice(0, 3)
                     .map((user) => (
-                      <UserCard key={user.id} user={user} />
+                      <UserCard key={user._id} user={user} />
                     ))}
                   
                   {filteredUsers.length > 3 && (
@@ -190,61 +230,11 @@ export const Dashboard: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Recent Activity */}
-            <div className="card">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center space-x-2">
-                  <Clock className="w-5 h-5" />
-                  <span>Recent Activity</span>
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {recentPokes.length} activities
-                </span>
-              </div>
-              
-              {recentPokes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>No recent activity</p>
-                  <p className="text-sm mt-2">Start poking users to see activity here!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentPokes.map((poke) => (
-                    <div
-                      key={poke.id}
-                      className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg border transition-colors"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center text-white">
-                          {poke.fromUser?.username?.charAt(0) || 'U'}
-                        </div>
-                        <div>
-                          <p className="font-semibold">
-                            {poke.fromUser?.username || 'Unknown User'} poked{' '}
-                            {poke.toUser?.id === user?.id ? 'you' : poke.toUser?.username}
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {formatDistanceToNow(new Date(poke.timestamp), { addSuffix: true })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-green-600">+{poke.pointsEarned}</p>
-                        <p className="text-sm text-gray-500">points</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right Column */}
           <div className="space-y-8">
-            {/* Leaderboard Preview - Using topUsers from context */}
+            {/* Leaderboard Preview */}
             <div className="card">
               <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
                 <Trophy className="w-5 h-5" />
@@ -259,7 +249,7 @@ export const Dashboard: React.FC = () => {
                 <>
                   <div className="space-y-4">
                     {topUsers.slice(0, 5).map((user, index) => (
-                      <div key={user.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                      <div key={user._id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center text-white font-bold">
                             {index + 1}
@@ -282,55 +272,6 @@ export const Dashboard: React.FC = () => {
                   </Link>
                 </>
               )}
-            </div>
-
-            {/* Milestones */}
-            <div className="card">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <Award className="w-5 h-5" />
-                <span>Next Milestones</span>
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                      1
-                    </div>
-                    <div>
-                      <span className="font-medium">500 Pokes Sent</span>
-                      <p className="text-sm text-gray-600">{500 - pokesSent} more to go</p>
-                    </div>
-                  </div>
-                  <span className="text-blue-600 font-semibold">+100 points</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
-                      2
-                    </div>
-                    <div>
-                      <span className="font-medium">30 Day Streak</span>
-                      <p className="text-sm text-gray-600">{30 - streak} more days</p>
-                    </div>
-                  </div>
-                  <span className="text-purple-600 font-semibold">+500 points</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                      3
-                    </div>
-                    <div>
-                      <span className="font-medium">20K Total Points</span>
-                      <p className="text-sm text-gray-600">{20000 - totalEarned} more points</p>
-                    </div>
-                  </div>
-                  <span className="text-green-600 font-semibold">+250 points</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

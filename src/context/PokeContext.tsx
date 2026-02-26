@@ -1,23 +1,26 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { authApi } from '../api/auth';
+import { pokeApi } from '../api/poke';
 
 interface User {
-  id: string;
+  _id: string;
   username: string;
   email: string;
   points: number;
   pokesSent: number;
   pokesReceived: number;
   streak: number;
+  loginStreak: number;
   rank: number;
   isOnline: boolean;
-}
-
-interface Poke {
-  id: string;
-  fromUser: User;
-  toUser: User;
-  pointsEarned: number;
-  timestamp: string;
+  avatar?: string;
+  bio?: string;
+  referralCode?: string;
+  referralBonusEarned: number;
+  totalEarned: number;
+  totalWithdrawn: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PokeContextType {
@@ -26,13 +29,17 @@ interface PokeContextType {
   pokesSent: number;
   pokesReceived: number;
   streak: number;
-  recentPokes: Poke[];
+  loginStreak: number;
   topUsers: User[];
-  refreshData: () => void;
+  dailyLimits: { remainingSends: number; remainingReceives: number; date: string };
+  refreshData: () => Promise<void>;
   updateUserPoints: (points: number) => void;
   incrementPokesSent: () => void;
-  incrementPokesReceived: () => void;
-  updateUserProfile: (updates: { username?: string; email?: string }) => void;
+  updateUserProfile: (updates: { username?: string; email?: string; bio?: string }) => void;
+  sendPoke: (userId: string, adTaskId?: string) => Promise<any>;
+  getAvailableUsers: (search?: string) => Promise<any>;
+  getDailyLimits: () => Promise<any>;
+  syncUserFromBackend: () => Promise<void>;
 }
 
 const PokeContext = createContext<PokeContextType | undefined>(undefined);
@@ -50,222 +57,160 @@ interface PokeProviderProps {
 }
 
 export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
-  const defaultUser: User = {
-    id: '1',
-    username: 'PokeMaster',
-    email: 'poke@example.com',
-    points: 12500,
-    pokesSent: 450,
-    pokesReceived: 320,
-    streak: 14,
-    rank: 1,
-    isOnline: true,
+  const [user, setUser] = useState<User | null>(() => {
+    // Load from localStorage on initial mount
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [topUsers, setTopUsers] = useState<User[]>([]);
+  const [dailyLimits, setDailyLimits] = useState({
+    remainingSends: 2,
+    remainingReceives: 2,
+    date: new Date().toISOString().split('T')[0]
+  });
+
+  const syncUserFromBackend = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await authApi.getProfile();
+      if (response.success && response.user) {
+        setUser(response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+    } catch (error) {
+      console.error('Error syncing user:', error);
+    }
   };
 
-  const [user, setUser] = useState<User>(defaultUser);
+  const loadUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-  const [recentPokes, setRecentPokes] = useState<Poke[]>([
-    {
-      id: '1',
-      fromUser: { 
-        id: '2', 
-        username: 'ZapZap', 
-        points: 9800, 
-        pokesSent: 320, 
-        pokesReceived: 280, 
-        streak: 7, 
-        rank: 2, 
-        isOnline: true, 
-        email: 'zap@example.com' 
-      },
-      toUser: defaultUser,
-      pointsEarned: 50,
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    },
-    {
-      id: '2',
-      fromUser: { 
-        id: '3', 
-        username: 'Sparky', 
-        points: 7600, 
-        pokesSent: 280, 
-        pokesReceived: 240, 
-        streak: 21, 
-        rank: 3, 
-        isOnline: false, 
-        email: 'spark@example.com' 
-      },
-      toUser: defaultUser,
-      pointsEarned: 50,
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    },
-  ]);
+      // Get fresh data
+      await syncUserFromBackend();
 
-  // Initialize topUsers with the default user
-  const [topUsers, setTopUsers] = useState<User[]>([
-    defaultUser,
-    { 
-      id: '2', 
-      username: 'ZapZap', 
-      points: 9800, 
-      pokesSent: 320, 
-      pokesReceived: 280, 
-      streak: 7, 
-      rank: 2, 
-      isOnline: true, 
-      email: 'zap@example.com' 
-    },
-    { 
-      id: '3', 
-      username: 'Sparky', 
-      points: 7600, 
-      pokesSent: 280, 
-      pokesReceived: 240, 
-      streak: 21, 
-      rank: 3, 
-      isOnline: false, 
-      email: 'spark@example.com' 
-    },
-    { 
-      id: '4', 
-      username: 'Thunder', 
-      points: 5400, 
-      pokesSent: 210, 
-      pokesReceived: 180, 
-      streak: 3, 
-      rank: 4, 
-      isOnline: true, 
-      email: 'thunder@example.com' 
-    },
-  ]);
+      // Get leaderboard
+      const leaderboardResponse = await pokeApi.getLeaderboard();
+      if (leaderboardResponse.success) {
+        setTopUsers(leaderboardResponse.users || []);
+      }
+
+      // Get daily limits
+      await getDailyLimits();
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      loadUserData();
+    }
+    
+    // Set up periodic sync every 30 seconds
+    const syncInterval = setInterval(() => {
+      if (localStorage.getItem('token')) {
+        syncUserFromBackend();
+      }
+    }, 30000);
+    
+    return () => clearInterval(syncInterval);
+  }, []);
+
+  const refreshData = async () => {
+    await loadUserData();
+  };
 
   const updateUserPoints = (points: number) => {
-    setUser(prev => {
-      const updatedUser = {
-        ...prev,
-        points: prev.points + points
-      };
-      
-      // Update topUsers to keep data consistent
-      setTopUsers(prevTopUsers => 
-        prevTopUsers.map(u => 
-          u.id === updatedUser.id ? updatedUser : u
-        )
-      );
-      
-      return updatedUser;
-    });
+    setUser(prev => prev ? { 
+      ...prev, 
+      points: prev.points + points,
+      totalEarned: (prev.totalEarned || 0) + points
+    } : null);
   };
 
   const incrementPokesSent = () => {
-    setUser(prev => {
-      const updatedUser = {
-        ...prev,
-        pokesSent: prev.pokesSent + 1
-      };
-      
-      // Update topUsers to keep data consistent
-      setTopUsers(prevTopUsers => 
-        prevTopUsers.map(u => 
-          u.id === updatedUser.id ? updatedUser : u
-        )
-      );
-      
-      return updatedUser;
-    });
+    setUser(prev => prev ? { ...prev, pokesSent: prev.pokesSent + 1 } : null);
   };
 
-  const incrementPokesReceived = () => {
-    setUser(prev => {
-      const updatedUser = {
-        ...prev,
-        pokesReceived: prev.pokesReceived + 1
-      };
-      
-      // Update topUsers to keep data consistent
-      setTopUsers(prevTopUsers => 
-        prevTopUsers.map(u => 
-          u.id === updatedUser.id ? updatedUser : u
-        )
-      );
-      
-      return updatedUser;
-    });
+  const updateUserProfile = (updates: { username?: string; email?: string; bio?: string }) => {
+    setUser(prev => prev ? { ...prev, ...updates } : null);
   };
 
-  const updateUserProfile = (updates: { username?: string; email?: string }) => {
-    setUser(prev => {
-      const updatedUser = {
-        ...prev,
-        ...updates
-      };
-      
-      // Update topUsers to keep data consistent
-      setTopUsers(prevTopUsers => 
-        prevTopUsers.map(u => 
-          u.id === updatedUser.id ? updatedUser : u
-        )
-      );
-      
-      return updatedUser;
-    });
-  };
-
-  const refreshData = () => {
-    console.log('Refreshing data...');
-    // In real app, this would fetch fresh data from API
-  };
-
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
+  const sendPoke = async (userId: string, adTaskId: string = 'demo-ad-task-id') => {
+    try {
+      const response = await pokeApi.sendPoke(userId, adTaskId);
+      if (response.success) {
+        // Sync fresh data after poke
+        await syncUserFromBackend();
         
-        // Also update topUsers to keep data consistent
-        setTopUsers(prev => 
-          prev.map(u => 
-            u.id === parsedUser.id ? parsedUser : u
-          )
-        );
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
+        // Update daily limits
+        if (response.remainingSends !== undefined) {
+          setDailyLimits(prev => ({
+            ...prev,
+            remainingSends: response.remainingSends
+          }));
+        } else {
+          await getDailyLimits();
+        }
       }
+      return response;
+    } catch (error) {
+      console.error('Error sending poke:', error);
+      throw error;
     }
-  }, []);
+  };
 
-  // Save user to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('user', JSON.stringify(user));
-  }, [user]);
+  const getAvailableUsers = async (search?: string) => {
+    try {
+      const response = await pokeApi.getAvailableUsers(search);
+      return response;
+    } catch (error) {
+      console.error('Error getting available users:', error);
+      throw error;
+    }
+  };
 
-  // Update recentPokes when user changes
-  useEffect(() => {
-    setRecentPokes(prev => 
-      prev.map(poke => ({
-        ...poke,
-        toUser: poke.toUser.id === user.id ? user : poke.toUser
-      }))
-    );
-  }, [user]);
+  const getDailyLimits = async () => {
+    try {
+      const response = await pokeApi.getDailyLimits();
+      if (response.success) {
+        setDailyLimits({
+          remainingSends: response.limits.remainingSends,
+          remainingReceives: response.limits.remainingReceives,
+          date: response.limits.date
+        });
+      }
+      return response;
+    } catch (error) {
+      console.error('Error getting daily limits:', error);
+      throw error;
+    }
+  };
 
   return (
     <PokeContext.Provider
       value={{
         user,
-        points: user.points,
-        pokesSent: user.pokesSent,
-        pokesReceived: user.pokesReceived,
-        streak: user.streak,
-        recentPokes,
+        points: user?.points || 0,
+        pokesSent: user?.pokesSent || 0,
+        pokesReceived: user?.pokesReceived || 0,
+        streak: user?.streak || 0,
+        loginStreak: user?.loginStreak || 0,
         topUsers,
+        dailyLimits,
         refreshData,
         updateUserPoints,
         incrementPokesSent,
-        incrementPokesReceived,
         updateUserProfile,
+        sendPoke,
+        getAvailableUsers,
+        getDailyLimits,
+        syncUserFromBackend,
       }}
     >
       {children}

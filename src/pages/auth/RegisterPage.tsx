@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Ticket, Users } from 'lucide-react';
+import { Zap, User, Mail, Eye, EyeOff, AlertCircle, CheckCircle, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authApi } from '../../api/auth';
 
 export const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +10,6 @@ export const RegisterPage: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    couponCode: '',
     referralCode: '',
   });
   
@@ -21,9 +21,7 @@ export const RegisterPage: React.FC = () => {
     email?: string;
     password?: string;
     confirmPassword?: string;
-    couponCode?: string;
   }>({});
-  const [passwordStrength, setPasswordStrength] = useState(0);
 
   // Get referral code from URL if present
   React.useEffect(() => {
@@ -31,11 +29,8 @@ export const RegisterPage: React.FC = () => {
     const ref = urlParams.get('ref');
     if (ref) {
       setFormData(prev => ({ ...prev, referralCode: ref }));
-      
-      // Show notification about referral
       toast.success('Referral code detected! The referrer will earn ₦300 when you sign up.', {
         duration: 5000,
-        icon: '���',
       });
     }
   }, []);
@@ -47,6 +42,8 @@ export const RegisterPage: React.FC = () => {
       newErrors.username = 'Username is required';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
+    } else if (formData.username.length > 20) {
+      newErrors.username = 'Username cannot exceed 20 characters';
     }
     
     if (!formData.email) {
@@ -57,38 +54,20 @@ export const RegisterPage: React.FC = () => {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
     
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
     
-    if (!formData.couponCode.trim()) {
-      newErrors.couponCode = 'Coupon code is required for signup';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const calculatePasswordStrength = (password: string) => {
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 25;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-    return strength;
-  };
-
-  const handlePasswordChange = (password: string) => {
-    setFormData(prev => ({ ...prev, password }));
-    setPasswordStrength(calculatePasswordStrength(password));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission
     
     if (!validateForm()) {
       return;
@@ -97,91 +76,40 @@ export const RegisterPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Note: In real backend, we would:
-      // 1. Validate coupon code
-      // 2. If referral code exists, give N300 to the referrer
-      // 3. Create user account
-      
-      // For demo: Track referral usage
-      if (formData.referralCode.trim()) {
-        // In real app, this would call API to give N300 to referrer
-        console.log(`User ${formData.username} signed up using referral code: ${formData.referralCode}`);
-        console.log(`Referrer with code ${formData.referralCode} should receive ₦300 bonus`);
-        
-        // Show notification about referral
-        toast.success(`Using referral code! The referrer will earn ₦300 bonus.`, {
-          duration: 4000,
-        });
-      }
-      
-      // Create new user with 500 bonus points
-      const totalPoints = 500; // Base signup bonus
-      
-      localStorage.setItem('token', 'demo-token-new');
-      localStorage.setItem('user', JSON.stringify({
-        id: `user-${Date.now()}`,
+      const response = await authApi.register({
         username: formData.username,
         email: formData.email,
-        points: totalPoints,
-        pokesSent: 0,
-        pokesReceived: 0,
-        streak: 0,
-        rank: 999,
-        isOnline: true,
-        couponCode: formData.couponCode,
-        referralCode: formData.referralCode || null,
-        referralCodeUsed: formData.referralCode || null, // The code they used
-      }));
-      
-      localStorage.setItem('wallet', JSON.stringify({
-        balance: totalPoints,
-        totalEarned: totalPoints,
-      }));
-      
-      // Store coupon usage
-      const usedCoupons = JSON.parse(localStorage.getItem('usedCoupons') || '[]');
-      usedCoupons.push(formData.couponCode);
-      localStorage.setItem('usedCoupons', JSON.stringify(usedCoupons));
-      
-      // Store referral for demo (in real app, this would be in backend)
-      if (formData.referralCode.trim()) {
-        const referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
-        referrals.push({
-          referrerCode: formData.referralCode,
-          referredUser: formData.username,
-          date: new Date().toISOString(),
-          bonusPaid: false // In real app, admin would approve and pay
-        });
-        localStorage.setItem('referrals', JSON.stringify(referrals));
-      }
-      
-      toast.success(`Account created successfully! 500 bonus points added! ���`, {
-        duration: 4000,
+        password: formData.password,
+        referralCode: formData.referralCode || undefined
       });
       
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      if (response.success) {
+        toast.success(`Account created successfully! 500 free points added! ���`, {
+          duration: 4000,
+        });
+        
+        // Redirect to dashboard after 1 second
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      } else {
+        toast.error(response.message || 'Registration failed');
+      }
       
-    } catch (error) {
-      toast.error('Registration failed. Please try again.');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      // Handle specific error cases
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else if (error.message?.includes('Network Error')) {
+        toast.error('Cannot connect to server. Please check your connection.');
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength < 50) return 'bg-red-500';
-    if (passwordStrength < 75) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  const getPasswordStrengthText = () => {
-    if (passwordStrength < 50) return 'Weak';
-    if (passwordStrength < 75) return 'Medium';
-    return 'Strong';
   };
 
   return (
@@ -193,10 +121,10 @@ export const RegisterPage: React.FC = () => {
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Join POKEDOT</h1>
-          <p className="text-gray-600">Create your account</p>
+          <p className="text-gray-600">Create your FREE account</p>
           <div className="mt-4 inline-flex items-center space-x-2 bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-200">
             <CheckCircle className="w-4 h-4" />
-            <span className="font-bold">500 points signup bonus!</span>
+            <span className="font-bold">FREE 500 points signup bonus!</span>
           </div>
         </div>
 
@@ -211,7 +139,6 @@ export const RegisterPage: React.FC = () => {
                 Username
               </label>
               <div className="relative">
-                <User className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.username ? 'text-primary-500' : 'text-gray-400'}`} />
                 <input
                   type="text"
                   value={formData.username}
@@ -219,9 +146,19 @@ export const RegisterPage: React.FC = () => {
                     setFormData(prev => ({ ...prev, username: e.target.value }));
                     setErrors(prev => ({ ...prev, username: undefined }));
                   }}
-                  className={`input-field pl-10 ${errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.username ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  className={`input-field pr-10 ${
+                    errors.username 
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                      : formData.username 
+                        ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
+                        : ''
+                  }`}
                   placeholder="Choose a username"
+                  maxLength={20}
                 />
+                <User className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                  errors.username ? 'text-red-400' : 'text-gray-400'
+                }`} />
               </div>
               {errors.username && (
                 <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
@@ -237,7 +174,6 @@ export const RegisterPage: React.FC = () => {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.email ? 'text-primary-500' : 'text-gray-400'}`} />
                 <input
                   type="email"
                   value={formData.email}
@@ -245,9 +181,18 @@ export const RegisterPage: React.FC = () => {
                     setFormData(prev => ({ ...prev, email: e.target.value }));
                     setErrors(prev => ({ ...prev, email: undefined }));
                   }}
-                  className={`input-field pl-10 ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.email ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  className={`input-field pr-10 ${
+                    errors.email 
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                      : formData.email 
+                        ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
+                        : ''
+                  }`}
                   placeholder="you@example.com"
                 />
+                <Mail className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                  errors.email ? 'text-red-400' : 'text-gray-400'
+                }`} />
               </div>
               {errors.email && (
                 <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
@@ -257,79 +202,52 @@ export const RegisterPage: React.FC = () => {
               )}
             </div>
 
-            {/* Coupon Code - REQUIRED */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Coupon Code <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Ticket className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.couponCode ? 'text-primary-500' : 'text-gray-400'}`} />
-                <input
-                  type="text"
-                  value={formData.couponCode}
-                  onChange={(e) => {
-                    setFormData(prev => ({ ...prev, couponCode: e.target.value }));
-                    setErrors(prev => ({ ...prev, couponCode: undefined }));
-                  }}
-                  className={`input-field pl-10 ${errors.couponCode ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.couponCode ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
-                  placeholder="Enter your coupon code"
-                />
-              </div>
-              {errors.couponCode && (
-                <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{errors.couponCode}</span>
-                </div>
-              )}
-              <p className="text-sm text-gray-500 mt-2">
-                Coupon code is required for signup. Get one from a coupon vendor.
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Vendors will be listed on the homepage with contact details for purchasing.
-              </p>
-            </div>
-
             {/* Referral Code (Optional) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Referral Code (Optional)
               </label>
               <div className="relative">
-                <Users className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.referralCode ? 'text-primary-500' : 'text-gray-400'}`} />
                 <input
                   type="text"
                   value={formData.referralCode}
-                  onChange={(e) => {
-                    setFormData(prev => ({ ...prev, referralCode: e.target.value }));
-                  }}
-                  className={`input-field pl-10 ${formData.referralCode ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
-                  placeholder="Enter referral code"
+                  onChange={(e) => setFormData(prev => ({ ...prev, referralCode: e.target.value }))}
+                  className={`input-field pr-10 ${
+                    formData.referralCode 
+                      ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
+                      : ''
+                  }`}
+                  placeholder="Enter referral code (optional)"
                 />
+                <Users className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
               <p className="text-sm text-gray-500 mt-2">
                 Using someone's referral code helps them earn <span className="font-semibold text-green-600">₦300</span>.
               </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Share your own referral code to earn ₦300 when others sign up!
-              </p>
             </div>
 
-            {/* Password */}
+            {/* Password - Only Eye Icon */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.password ? 'text-primary-500' : 'text-gray-400'}`} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => {
-                    handlePasswordChange(e.target.value);
+                    setFormData(prev => ({ ...prev, password: e.target.value }));
                     setErrors(prev => ({ ...prev, password: undefined }));
                   }}
-                  className={`input-field pl-10 pr-10 ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.password ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  className={`input-field pr-10 ${
+                    errors.password 
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                      : formData.password 
+                        ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
+                        : ''
+                  }`}
                   placeholder="••••••••"
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -339,57 +257,21 @@ export const RegisterPage: React.FC = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              
-              {/* Password Strength */}
-              {formData.password && (
-                <div className="mt-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Password strength:</span>
-                    <span className={`font-medium ${
-                      passwordStrength < 50 ? 'text-red-600' :
-                      passwordStrength < 75 ? 'text-yellow-600' : 'text-green-600'
-                    }`}>
-                      {getPasswordStrengthText()}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
-                      style={{ width: `${passwordStrength}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2 space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                      <span>At least 8 characters</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${/[A-Z]/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                      <span>One uppercase letter</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${/[0-9]/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                      <span>One number</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {errors.password && (
                 <div className="flex items-center space-x-1 mt-2 text-red-600 text-sm">
                   <AlertCircle className="w-4 h-4" />
                   <span>{errors.password}</span>
                 </div>
               )}
+              <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
             </div>
 
-            {/* Confirm Password */}
+            {/* Confirm Password - Only Eye Icon */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${formData.confirmPassword ? 'text-primary-500' : 'text-gray-400'}`} />
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
@@ -397,7 +279,13 @@ export const RegisterPage: React.FC = () => {
                     setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
                     setErrors(prev => ({ ...prev, confirmPassword: undefined }));
                   }}
-                  className={`input-field pl-10 pr-10 ${errors.confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''} ${formData.confirmPassword ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' : ''}`}
+                  className={`input-field pr-10 ${
+                    errors.confirmPassword 
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                      : formData.confirmPassword 
+                        ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
+                        : ''
+                  }`}
                   placeholder="••••••••"
                 />
                 <button
@@ -446,7 +334,7 @@ export const RegisterPage: React.FC = () => {
               ) : (
                 <>
                   <Zap className="w-5 h-5" />
-                  <span>Create Account</span>
+                  <span>Create FREE Account</span>
                 </>
               )}
             </button>
@@ -466,7 +354,7 @@ export const RegisterPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer - Simplified */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">
             POKEDOT © {new Date().getFullYear()} • Poke-to-Earn Platform
