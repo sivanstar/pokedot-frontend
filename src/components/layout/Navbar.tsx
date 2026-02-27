@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, User, LogOut, Settings, Shield, Menu, X } from 'lucide-react';
+import { Zap, User, LogOut, Settings, Shield, Menu, X, Trophy, Wallet } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import { authApi } from '../../api/auth';
 import toast from 'react-hot-toast';
@@ -149,6 +149,7 @@ export const Navbar: React.FC = () => {
           <button
             onClick={toggleMobileMenu}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
               <X className="w-6 h-6 text-gray-600" />
