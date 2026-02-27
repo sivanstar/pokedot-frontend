@@ -89,7 +89,7 @@ export const RegisterPage: React.FC = () => {
       });
       
       if (response.success) {
-        toast.success(`Account created successfully! 500 free points added! í¾‰`, {
+        toast.success(`Account created successfully! 500 free points added! ï¿½ï¿½ï¿½`, {
           duration: 4000,
         });
         
@@ -132,7 +132,7 @@ export const RegisterPage: React.FC = () => {
         }));
         toast.error('Username already exists', { 
           duration: 4000,
-          icon: 'í±¤'
+          icon: 'ï¿½ï¿½ï¿½'
         });
       } 
       // Check for email-specific errors - expanded list
@@ -148,7 +148,7 @@ export const RegisterPage: React.FC = () => {
         }));
         toast.error('Email already registered', { 
           duration: 4000,
-          icon: 'í³§'
+          icon: 'ï¿½ï¿½ï¿½'
         });
       }
       // Handle MongoDB duplicate key error (more specific)
@@ -164,7 +164,7 @@ export const RegisterPage: React.FC = () => {
           }));
           toast.error('Username already exists', { 
             duration: 4000,
-            icon: 'í±¤'
+            icon: 'ï¿½ï¿½ï¿½'
           });
         } else if (errorMessage.includes('email') || error.response?.data?.error?.includes('email')) {
           setErrors(prev => ({ 
@@ -173,7 +173,7 @@ export const RegisterPage: React.FC = () => {
           }));
           toast.error('Email already registered', { 
             duration: 4000,
-            icon: 'í³§'
+            icon: 'ï¿½ï¿½ï¿½'
           });
         } else {
           setErrors(prev => ({ ...prev, general: 'User already exists with this username or email.' }));
@@ -285,7 +285,7 @@ export const RegisterPage: React.FC = () => {
                         ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
                         : ''
                   }`}
-                  placeholder="you@example.com"
+                  placeholder="Email"
                   disabled={isLoading}
                 />
                 <Mail className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
@@ -320,9 +320,6 @@ export const RegisterPage: React.FC = () => {
                 />
                 <Users className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
-              <p className="text-sm text-gray-500 mt-2">
-                Using someone's referral code helps them earn <span className="font-semibold text-green-600">â‚¦300</span>.
-              </p>
             </div>
 
             {/* Password */}
