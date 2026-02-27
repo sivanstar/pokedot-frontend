@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Zap, User, Mail, Eye, EyeOff, AlertCircle, CheckCircle, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Zap, User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authApi } from '../../api/auth';
 
 export const RegisterPage: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -21,10 +22,11 @@ export const RegisterPage: React.FC = () => {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    general?: string;
   }>({});
 
   // Get referral code from URL if present
-  React.useEffect(() => {
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const ref = urlParams.get('ref');
     if (ref) {
@@ -49,7 +51,7 @@ export const RegisterPage: React.FC = () => {
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Please enter a valid email address';
     }
     
     if (!formData.password) {
@@ -67,7 +69,10 @@ export const RegisterPage: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
+    
+    // Clear previous errors
+    setErrors({});
     
     if (!validateForm()) {
       return;
@@ -90,22 +95,47 @@ export const RegisterPage: React.FC = () => {
         
         // Redirect to dashboard after 1 second
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }, 1000);
-      } else {
-        toast.error(response.message || 'Registration failed');
       }
       
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Handle specific error cases
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      // Extract error message from response
       if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else if (error.message?.includes('Network Error')) {
-        toast.error('Cannot connect to server. Please check your connection.');
-      } else {
-        toast.error('Registration failed. Please try again.');
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Handle specific error messages
+      if (errorMessage.toLowerCase().includes('username already exists') || 
+          errorMessage.toLowerCase().includes('username already taken')) {
+        setErrors(prev => ({ ...prev, username: 'This username is already taken' }));
+        toast.error('Username already exists', { duration: 4000 });
+      } 
+      else if (errorMessage.toLowerCase().includes('email already exists') || 
+               errorMessage.toLowerCase().includes('email already registered') ||
+               errorMessage.toLowerCase().includes('email already taken')) {
+        setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
+        toast.error('Email already exists', { duration: 4000 });
+      }
+      else if (error.response?.status === 400) {
+        setErrors(prev => ({ ...prev, general: errorMessage }));
+        toast.error(errorMessage, { duration: 4000 });
+      }
+      else if (error.message?.includes('Network Error')) {
+        setErrors(prev => ({ ...prev, general: 'Cannot connect to server. Please check your connection.' }));
+        toast.error('Cannot connect to server. Please check your connection.', { duration: 4000 });
+      }
+      else {
+        setErrors(prev => ({ ...prev, general: errorMessage }));
+        toast.error(errorMessage, { duration: 4000 });
       }
     } finally {
       setIsLoading(false);
@@ -132,6 +162,17 @@ export const RegisterPage: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Create your account</h2>
           
+          {/* General Error Message */}
+          {errors.general && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-800 font-medium">Registration Failed</p>
+                <p className="text-red-600 text-sm mt-1">{errors.general}</p>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username */}
             <div>
@@ -144,7 +185,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.username}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, username: e.target.value }));
-                    setErrors(prev => ({ ...prev, username: undefined }));
+                    setErrors(prev => ({ ...prev, username: undefined, general: undefined }));
                   }}
                   className={`input-field pr-10 ${
                     errors.username 
@@ -155,6 +196,7 @@ export const RegisterPage: React.FC = () => {
                   }`}
                   placeholder="Choose a username"
                   maxLength={20}
+                  disabled={isLoading}
                 />
                 <User className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
                   errors.username ? 'text-red-400' : 'text-gray-400'
@@ -179,7 +221,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, email: e.target.value }));
-                    setErrors(prev => ({ ...prev, email: undefined }));
+                    setErrors(prev => ({ ...prev, email: undefined, general: undefined }));
                   }}
                   className={`input-field pr-10 ${
                     errors.email 
@@ -189,6 +231,7 @@ export const RegisterPage: React.FC = () => {
                         : ''
                   }`}
                   placeholder="Email"
+                  disabled={isLoading}
                 />
                 <Mail className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
                   errors.email ? 'text-red-400' : 'text-gray-400'
@@ -218,12 +261,13 @@ export const RegisterPage: React.FC = () => {
                       : ''
                   }`}
                   placeholder="Enter referral code (optional)"
+                  disabled={isLoading}
                 />
                 <Users className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
             </div>
 
-            {/* Password - Only Eye Icon */}
+            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -234,7 +278,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.password}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, password: e.target.value }));
-                    setErrors(prev => ({ ...prev, password: undefined }));
+                    setErrors(prev => ({ ...prev, password: undefined, general: undefined }));
                   }}
                   className={`input-field pr-10 ${
                     errors.password 
@@ -245,11 +289,13 @@ export const RegisterPage: React.FC = () => {
                   }`}
                   placeholder="••••••••"
                   minLength={6}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -263,7 +309,7 @@ export const RegisterPage: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
             </div>
 
-            {/* Confirm Password - Only Eye Icon */}
+            {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
@@ -274,7 +320,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.confirmPassword}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
-                    setErrors(prev => ({ ...prev, confirmPassword: undefined }));
+                    setErrors(prev => ({ ...prev, confirmPassword: undefined, general: undefined }));
                   }}
                   className={`input-field pr-10 ${
                     errors.confirmPassword 
@@ -284,11 +330,13 @@ export const RegisterPage: React.FC = () => {
                         : ''
                   }`}
                   placeholder="••••••••"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  disabled={isLoading}
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -308,6 +356,7 @@ export const RegisterPage: React.FC = () => {
                 id="terms"
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1"
                 required
+                disabled={isLoading}
               />
               <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                 I agree to the{' '}
