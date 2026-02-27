@@ -5,7 +5,19 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5175,
-    host: true,
-    open: true
+    strictPort: true,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['lucide-react', 'date-fns', 'react-hot-toast']
+        }
+      }
+    }
   }
 })
