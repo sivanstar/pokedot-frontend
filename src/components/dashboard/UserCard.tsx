@@ -1,82 +1,38 @@
 import React from 'react';
-import { TrendingUp, Zap, Users } from 'lucide-react';
-import { PokeButton } from '../poke/PokeButton';
-
-interface User {
-  id: string;
-  username: string;
-  points: number;
-  pokesSent: number;
-  pokesReceived: number;
-  streak: number;
-  rank: number;
-  isOnline: boolean;
-}
+import { Link } from 'react-router-dom';
+import { User, Zap } from 'lucide-react';
 
 interface UserCardProps {
-  user: User;
-  showDetails?: boolean;
+  user: any;
 }
 
-export const UserCard: React.FC<UserCardProps> = ({ user, showDetails = true }) => {
+export const UserCard: React.FC<UserCardProps> = ({ user }) => {
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {user.username.charAt(0).toUpperCase()}
-            </div>
+    <div className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center text-white font-bold">
+          {user.username?.charAt(0).toUpperCase() || 'U'}
+        </div>
+        <div>
+          <p className="font-semibold text-sm md:text-base">{user.username}</p>
+          <p className="text-xs md:text-sm text-gray-500">
+            {user.points?.toLocaleString() || 0} points
+          </p>
+          <div className="flex items-center space-x-2 mt-1">
+            <span className="text-xs text-gray-400">#{user.rank || 999}</span>
             {user.isOnline && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
-            )}
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">{user.username}</h3>
-            <p className="text-gray-600">{user.points.toLocaleString()} points</p>
-            {user.streak > 0 && (
-              <div className="flex items-center space-x-1 mt-1">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-sm text-green-600">{user.streak} day streak</span>
-              </div>
+              <span className="text-xs text-green-500">● Online</span>
             )}
           </div>
         </div>
       </div>
-      
-      {showDetails && (
-        <>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-center space-x-2 mb-1">
-                <Zap className="w-4 h-4 text-primary-600" />
-                <div className="text-2xl font-bold text-primary-600">{user.pokesSent}</div>
-              </div>
-              <div className="text-sm text-gray-600">Pokes Sent</div>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-center space-x-2 mb-1">
-                <Users className="w-4 h-4 text-secondary-600" />
-                <div className="text-2xl font-bold text-secondary-600">{user.pokesReceived}</div>
-              </div>
-              <div className="text-sm text-gray-600">Pokes Received</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <span className="text-gray-500">Rank:</span>
-              <span className="font-semibold ml-2">#{user.rank}</span>
-            </div>
-            <PokeButton
-              userId={user.id}
-              username={user.username}
-              size="md"
-              variant="primary"
-            />
-          </div>
-        </>
-      )}
+      <Link
+        to={`/poke?user=${user._id}`}
+        className="bg-primary-500 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors flex items-center space-x-1"
+      >
+        <Zap className="w-3 h-3 md:w-4 md:h-4" />
+        <span>Poke</span>
+      </Link>
     </div>
   );
 };

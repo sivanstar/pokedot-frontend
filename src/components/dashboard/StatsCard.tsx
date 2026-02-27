@@ -1,12 +1,10 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
-  value: string | number;
+  value: string;
   icon: React.ReactNode;
   color: string;
-  trend?: string | number;
   description?: string;
 }
 
@@ -15,29 +13,21 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   value,
   icon,
   color,
-  trend,
-  description,
+  description
 }) => {
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg bg-gradient-to-br ${color}`}>
-          {icon}
+    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-all hover:scale-105 active:scale-95">
+      <div className="flex items-center justify-between mb-3">
+        <div className={`p-2 md:p-3 rounded-lg bg-gradient-to-br ${color}`}>
+          <div className="text-white w-4 h-4 md:w-6 md:h-6">
+            {icon}
+          </div>
         </div>
-        {trend && (
-          <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-            typeof trend === 'string' && trend.includes('-')
-              ? 'text-red-600 bg-red-50'
-              : 'text-green-600 bg-green-50'
-          }`}>
-            {trend}
-          </span>
-        )}
       </div>
-      <h3 className="text-2xl font-bold text-gray-800 mb-1">{value}</h3>
-      <p className="text-gray-600">{title}</p>
+      <h3 className="text-lg md:text-xl font-bold text-gray-800 truncate">{value}</h3>
+      <p className="text-xs md:text-sm text-gray-600 font-medium mt-1 truncate">{title}</p>
       {description && (
-        <p className="text-sm text-gray-500 mt-2">{description}</p>
+        <p className="text-xs text-gray-500 mt-1 hidden md:block">{description}</p>
       )}
     </div>
   );
