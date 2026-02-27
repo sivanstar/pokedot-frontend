@@ -9,6 +9,7 @@ import { usePoke } from '../../context/PokeContext';
 import { useWallet } from '../../context/WalletContext';
 import { StatsCard } from '../../components/dashboard/StatsCard';
 import { UserCard } from '../../components/dashboard/UserCard';
+import { TransactionHistory } from '../../components/dashboard/TransactionHistory';
 import toast from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
@@ -281,6 +282,12 @@ export const Dashboard: React.FC = () => {
                 </>
               )}
             </div>
+
+            {/* Transaction History Preview - Visible on all screens */}
+            <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+              <h3 className="text-lg md:text-xl font-bold mb-4 text-gray-800">Recent Transactions</h3>
+              <TransactionHistory limit={3} />
+              </div>
 
             {/* Mobile Quick Stats Card - Visible only on mobile */}
             <div className="lg:hidden bg-white rounded-xl shadow-lg p-4">

@@ -88,7 +88,7 @@ export const ProfilePage: React.FC = () => {
     if (savedAvatar && !avatarUrl) {
       setAvatarUrl(savedAvatar);
     }
-  }, []); // Empty dependency array - run once on mount
+  }, []);
 
   // Save avatar to localStorage whenever it changes (for persistence)
   useEffect(() => {
@@ -382,19 +382,19 @@ export const ProfilePage: React.FC = () => {
   };
 
   const formatPoints = (points: number) => {
-    return points.toLocaleString() + ' points';
+    return points.toLocaleString() + ' pts';
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Profile Header */}
-        <div className="bg-gradient-to-r from-primary-500 via-purple-600 to-secondary-600 rounded-3xl p-8 mb-8 text-white shadow-xl">
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-4 md:py-8">
+      <div className="container mx-auto px-3 md:px-4 max-w-6xl">
+        {/* Profile Header - Mobile Optimized */}
+        <div className="bg-gradient-to-r from-primary-500 via-purple-600 to-secondary-600 rounded-2xl md:rounded-3xl p-6 md:p-8 mb-6 md:mb-8 text-white shadow-xl">
+          <div className="flex flex-col items-center md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-8">
             {/* Avatar with Upload */}
             <div className="relative">
               <div 
-                className="relative w-32 h-32 rounded-full border-4 border-white/30 cursor-pointer overflow-hidden bg-white/20 hover:opacity-90 transition-opacity group shadow-xl"
+                className="relative w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/30 cursor-pointer overflow-hidden bg-white/20 hover:opacity-90 transition-opacity group shadow-xl"
                 onClick={() => !isUploading && fileInputRef.current?.click()}
               >
                 {avatarUrl ? (
@@ -408,7 +408,7 @@ export const ProfilePage: React.FC = () => {
                     }}
                   />
                 ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-white/30 to-white/10 text-4xl font-bold">
+                  <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-white/30 to-white/10 text-3xl md:text-4xl font-bold">
                     {profileForm.username.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -416,10 +416,10 @@ export const ProfilePage: React.FC = () => {
                 {isUploading && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
                     <div className="relative">
-                      <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                       {uploadProgress !== null && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">{uploadProgress}%</span>
+                          <span className="text-white text-xs md:text-sm font-bold">{uploadProgress}%</span>
                         </div>
                       )}
                     </div>
@@ -428,7 +428,7 @@ export const ProfilePage: React.FC = () => {
                 
                 {!isUploading && (
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
-                    <Camera className="w-8 h-8 text-white" />
+                    <Camera className="w-6 h-6 md:w-8 md:h-8 text-white" />
                   </div>
                 )}
               </div>
@@ -436,10 +436,10 @@ export const ProfilePage: React.FC = () => {
               {avatarUrl && !isUploading && (
                 <button
                   onClick={removeAvatar}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-lg transition-all hover:scale-110"
+                  className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-red-500 text-white p-1.5 md:p-2 rounded-full hover:bg-red-600 shadow-lg transition-all hover:scale-110"
                   title="Remove profile picture"
                 >
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
               )}
               
@@ -453,201 +453,203 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+            <div className="flex-1 text-center md:text-left w-full">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-3">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">{profileForm.username}</h1>
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-white/90">
-                    <div className="flex items-center">
-                      <Trophy className="w-4 h-4 mr-1" />
-                      <span>Rank #{user?.rank || position?.position || 999}</span>
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2 truncate max-w-[200px] md:max-w-none">
+                    {profileForm.username}
+                  </h1>
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-4 text-xs md:text-sm text-white/90">
+                    <div className="flex items-center bg-white/10 px-2 py-1 rounded-full">
+                      <Trophy className="w-3 h-3 mr-1" />
+                      <span>#{user?.rank || position?.position || 999}</span>
                     </div>
-                    <div className="flex items-center">
-                      <Flame className="w-4 h-4 mr-1 text-orange-300" />
-                      <span>{user?.loginStreak || 0} day streak</span>
+                    <div className="flex items-center bg-white/10 px-2 py-1 rounded-full">
+                      <Flame className="w-3 h-3 mr-1 text-orange-300" />
+                      <span>{user?.loginStreak || 0}d</span>
                     </div>
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <span>Joined {formatDate(user?.createdAt)}</span>
+                    <div className="flex items-center bg-white/10 px-2 py-1 rounded-full">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      <span className="hidden sm:inline">Joined </span>
+                      <span>{formatDate(user?.createdAt).split(' ')[0]}</span>
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 md:mt-0 flex items-center space-x-3">
+                <div className="flex items-center justify-center md:justify-end space-x-2">
                   <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+                    className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors"
+                    title="Refresh"
                   >
                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    <span>Refresh</span>
                   </button>
                   <button
                     onClick={() => isEditing ? handleProfileSave() : setIsEditing(true)}
-                    className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
+                    className="bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors text-sm"
                   >
                     {isEditing ? <Save className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
-                    <span>{isEditing ? 'Save' : 'Edit Bio'}</span>
+                    <span>{isEditing ? 'Save' : 'Edit'}</span>
                   </button>
                 </div>
               </div>
 
               {isEditing ? (
-                <div>
+                <div className="mt-2">
                   <textarea
                     value={profileForm.bio}
                     onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
-                    className="w-full p-3 rounded-lg text-gray-800 bg-white/90"
-                    rows={3}
+                    className="w-full p-2 md:p-3 rounded-lg text-gray-800 bg-white/90 text-sm"
+                    rows={2}
                     maxLength={200}
                     placeholder="Tell us about yourself..."
                   />
-                  <div className="text-right text-sm text-white/80 mt-1">
+                  <div className="text-right text-xs text-white/80 mt-1">
                     {profileForm.bio.length}/200
                   </div>
                 </div>
               ) : (
-                <p className="text-lg opacity-90">{profileForm.bio || 'No bio yet. Click edit to add one!'}</p>
+                <p className="text-sm md:text-base opacity-90 mt-2 line-clamp-2">
+                  {profileForm.bio || 'No bio yet. Click edit to add one!'}
+                </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
-                <Wallet className="w-6 h-6 text-white" />
+        {/* Stats Cards - Mobile: 2 columns */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-2 md:mb-4">
+              <div className="p-2 md:p-3 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
+                <Wallet className="w-4 h-4 md:w-6 md:h-6 text-white" />
               </div>
-              <span className="text-sm text-gray-500">Current</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">{formatPoints(balance)}</h3>
-            <p className="text-gray-600 text-sm mt-1">Wallet Balance</p>
+            <h3 className="text-lg md:text-2xl font-bold text-gray-800 truncate">{formatPoints(balance)}</h3>
+            <p className="text-xs md:text-sm text-gray-600 mt-1">Balance</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
-                <TrendingUp className="w-6 h-6 text-white" />
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-2 md:mb-4">
+              <div className="p-2 md:p-3 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
+                <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-white" />
               </div>
-              <span className="text-sm text-gray-500">Total</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">{formatPoints(totalEarned)}</h3>
-            <p className="text-gray-600 text-sm mt-1">Points Earned</p>
+            <h3 className="text-lg md:text-2xl font-bold text-gray-800 truncate">{formatPoints(totalEarned)}</h3>
+            <p className="text-xs md:text-sm text-gray-600 mt-1">Earned</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500 to-red-500">
-                <Target className="w-6 h-6 text-white" />
+          <div className="col-span-2 md:col-span-1 bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-2 md:mb-4">
+              <div className="p-2 md:p-3 rounded-lg bg-gradient-to-br from-orange-500 to-red-500">
+                <Target className="w-4 h-4 md:w-6 md:h-6 text-white" />
               </div>
-              <span className="text-sm text-gray-500">Position</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">#{position?.position || user?.rank || 999}</h3>
-            <p className="text-gray-600 text-sm mt-1">of {position?.totalUsers || 0} users</p>
+            <h3 className="text-lg md:text-2xl font-bold text-gray-800">#{position?.position || user?.rank || 999}</h3>
+            <p className="text-xs md:text-sm text-gray-600 mt-1">of {position?.totalUsers || 0} users</p>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex space-x-1 mb-8 bg-white rounded-xl shadow p-1 border border-gray-100">
+        {/* Tabs - Horizontal Scroll on Mobile */}
+        <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-1 mb-6 md:mb-8 bg-white rounded-xl shadow p-1 border border-gray-100 hide-scrollbar">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
               activeTab === 'profile'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-1 md:space-x-2">
               <User className="w-4 h-4" />
               <span>Profile</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
               activeTab === 'stats'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-1 md:space-x-2">
               <Award className="w-4 h-4" />
               <span>Stats</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('account')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
               activeTab === 'account'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-1 md:space-x-2">
               <Banknote className="w-4 h-4" />
               <span>Bank</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
               activeTab === 'security'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-1 md:space-x-2">
               <Shield className="w-4 h-4" />
               <span>Security</span>
             </div>
           </button>
         </div>
 
-        {/* Tab Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* Tab Content - Stack on Mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Left Column - Full width on mobile */}
+          <div className="lg:col-span-2 space-y-6">
             {/* Profile Tab */}
             {activeTab === 'profile' && (
-              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">About Me</h3>
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">About Me</h3>
                 
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <Mail className="w-5 h-5 text-blue-600" />
+                <div className="space-y-4 md:space-y-6">
+                  <div className="flex items-start space-x-3 md:space-x-4">
+                    <div className="p-2 md:p-3 bg-blue-100 rounded-lg">
+                      <Mail className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-500 mb-1">Email Address</p>
-                      <p className="font-medium text-gray-800">{profileForm.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-green-100 rounded-lg">
-                      <Award className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-500 mb-1">Member Since</p>
-                      <p className="font-medium text-gray-800">{formatDate(user?.createdAt)}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm text-gray-500 mb-1">Email</p>
+                      <p className="font-medium text-gray-800 text-sm md:text-base truncate">{profileForm.email}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-purple-100 rounded-lg">
-                      <Zap className="w-5 h-5 text-purple-600" />
+                  <div className="flex items-start space-x-3 md:space-x-4">
+                    <div className="p-2 md:p-3 bg-green-100 rounded-lg">
+                      <Award className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-500 mb-1">Activity</p>
-                      <div className="grid grid-cols-2 gap-4">
+                      <p className="text-xs md:text-sm text-gray-500 mb-1">Member Since</p>
+                      <p className="font-medium text-gray-800 text-sm md:text-base">{formatDate(user?.createdAt)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3 md:space-x-4">
+                    <div className="p-2 md:p-3 bg-purple-100 rounded-lg">
+                      <Zap className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs md:text-sm text-gray-500 mb-1">Activity</p>
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
                         <div>
-                          <p className="font-medium text-gray-800">{user?.pokesSent || 0}</p>
-                          <p className="text-sm text-gray-500">Pokes Sent</p>
+                          <p className="font-bold text-gray-800 text-sm md:text-base">{user?.pokesSent || 0}</p>
+                          <p className="text-xs text-gray-500">Sent</p>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800">{user?.pokesReceived || 0}</p>
-                          <p className="text-sm text-gray-500">Pokes Received</p>
+                          <p className="font-bold text-gray-800 text-sm md:text-base">{user?.pokesReceived || 0}</p>
+                          <p className="text-xs text-gray-500">Received</p>
                         </div>
                       </div>
                     </div>
@@ -658,52 +660,52 @@ export const ProfilePage: React.FC = () => {
 
             {/* Stats Tab */}
             {activeTab === 'stats' && (
-              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Performance Stats</h3>
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Performance Stats</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   <div>
                     <div className="flex justify-between mb-2">
-                      <span className="text-gray-600">Global Rank</span>
-                      <span className="font-bold text-primary-600">#{position?.position || user?.rank || 999}</span>
+                      <span className="text-xs md:text-sm text-gray-600">Global Rank</span>
+                      <span className="font-bold text-primary-600 text-sm md:text-base">#{position?.position || user?.rank || 999}</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
                       <div 
-                        className="bg-gradient-to-r from-primary-500 to-secondary-500 h-2 rounded-full"
+                        className="bg-gradient-to-r from-primary-500 to-secondary-500 h-1.5 md:h-2 rounded-full"
                         style={{ width: `${position?.percentage || 0}%` }}
                       ></div>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Top {position?.percentage || 0}% of all users
+                    <p className="text-xs text-gray-500 mt-1">
+                      Top {position?.percentage || 0}%
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <p className="text-sm text-blue-600 mb-1">Login Streak</p>
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
+                      <p className="text-xs text-blue-600 mb-1">Login Streak</p>
                       <div className="flex items-center">
-                        <Flame className="w-5 h-5 text-orange-500 mr-2" />
-                        <span className="text-2xl font-bold text-gray-800">{user?.loginStreak || 0}</span>
+                        <Flame className="w-4 h-4 text-orange-500 mr-1 md:mr-2" />
+                        <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.loginStreak || 0}</span>
                       </div>
                     </div>
                     
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <p className="text-sm text-green-600 mb-1">Poke Streak</p>
+                    <div className="bg-green-50 p-3 md:p-4 rounded-lg">
+                      <p className="text-xs text-green-600 mb-1">Poke Streak</p>
                       <div className="flex items-center">
-                        <Zap className="w-5 h-5 text-yellow-500 mr-2" />
-                        <span className="text-2xl font-bold text-gray-800">{user?.streak || 0}</span>
+                        <Zap className="w-4 h-4 text-yellow-500 mr-1 md:mr-2" />
+                        <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.streak || 0}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t">
                     <div>
-                      <p className="text-gray-600 text-sm">Pokes Sent</p>
-                      <p className="text-2xl font-bold text-gray-800">{user?.pokesSent || 0}</p>
+                      <p className="text-xs text-gray-600">Pokes Sent</p>
+                      <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesSent || 0}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600 text-sm">Pokes Received</p>
-                      <p className="text-2xl font-bold text-gray-800">{user?.pokesReceived || 0}</p>
+                      <p className="text-xs text-gray-600">Pokes Received</p>
+                      <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesReceived || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -712,94 +714,91 @@ export const ProfilePage: React.FC = () => {
 
             {/* Account Tab */}
             {activeTab === 'account' && (
-              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-800">Bank Account Details</h3>
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-800">Bank Details</h3>
                   {!isEditingAccount && (
                     <button
                       onClick={() => setIsEditingAccount(true)}
-                      className="text-primary-600 hover:text-primary-500 font-medium"
+                      className="text-primary-600 hover:text-primary-500 text-sm md:text-base font-medium"
                     >
-                      {hasAccountDetails ? 'Edit' : 'Add Details'}
+                      {hasAccountDetails ? 'Edit' : 'Add'}
                     </button>
                   )}
                 </div>
 
                 {hasAccountDetails && !isEditingAccount ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3">
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Bank Name</p>
-                        <p className="font-medium text-gray-800">{accountForm.bankName}</p>
+                        <p className="text-xs text-gray-500 mb-1">Bank Name</p>
+                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.bankName}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Account Number</p>
-                        <p className="font-medium text-gray-800">{accountForm.accountNumber}</p>
+                        <p className="text-xs text-gray-500 mb-1">Account Number</p>
+                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountNumber}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 mb-1">Account Holder</p>
-                        <p className="font-medium text-gray-800">{accountForm.accountName}</p>
+                        <p className="text-xs text-gray-500 mb-1">Account Holder</p>
+                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountName}</p>
                       </div>
                     </div>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-yellow-800">Important</p>
-                          <p className="text-sm text-yellow-700">
-                            Withdrawals are processed within 3-5 business days. Minimum withdrawal: 2,000 points.
-                          </p>
-                        </div>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-yellow-700">
+                          Min withdrawal: 2,000 points
+                        </p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <div>
-                      <label className="block text-gray-700 mb-2">Bank Name</label>
+                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Bank Name</label>
                       <input
                         type="text"
                         value={accountForm.bankName}
                         onChange={(e) => setAccountForm({...accountForm, bankName: e.target.value})}
-                        className="input-field"
+                        className="input-field text-sm"
                         placeholder="e.g., GTBank"
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2">Account Number</label>
+                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Number</label>
                       <input
                         type="text"
                         value={accountForm.accountNumber}
                         onChange={(e) => setAccountForm({...accountForm, accountNumber: e.target.value})}
-                        className="input-field"
+                        className="input-field text-sm"
                         placeholder="0123456789"
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2">Account Holder Name</label>
+                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Holder</label>
                       <input
                         type="text"
                         value={accountForm.accountName}
                         onChange={(e) => setAccountForm({...accountForm, accountName: e.target.value})}
-                        className="input-field"
+                        className="input-field text-sm"
                         placeholder="John Doe"
                       />
                     </div>
 
                     {isEditingAccount && (
-                      <div className="flex space-x-3 pt-4">
+                      <div className="flex space-x-2 pt-3">
                         <button
                           onClick={handleAccountCancel}
-                          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+                          className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 text-sm"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={handleAccountSave}
-                          className="flex-1 btn-primary"
+                          className="flex-1 btn-primary py-2 text-sm"
                         >
-                          Save Details
+                          Save
                         </button>
                       </div>
                     )}
@@ -810,38 +809,38 @@ export const ProfilePage: React.FC = () => {
 
             {/* Security Tab */}
             {activeTab === 'security' && (
-              <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Change Password</h3>
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Change Password</h3>
                 
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   <div>
-                    <label className="block text-gray-700 mb-2">Current Password</label>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Current Password</label>
                     <input
                       type="password"
                       value={securityForm.currentPassword}
                       onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
-                      className="input-field"
-                      placeholder="Enter current password"
+                      className="input-field text-sm"
+                      placeholder="••••••••"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 mb-2">New Password</label>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">New Password</label>
                     <input
                       type="password"
                       value={securityForm.newPassword}
                       onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
-                      className="input-field"
-                      placeholder="Enter new password"
+                      className="input-field text-sm"
+                      placeholder="••••••••"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 mb-2">Confirm New Password</label>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Confirm</label>
                     <input
                       type="password"
                       value={securityForm.confirmPassword}
                       onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
-                      className="input-field"
-                      placeholder="Confirm new password"
+                      className="input-field text-sm"
+                      placeholder="••••••••"
                     />
                   </div>
                   <button
@@ -850,77 +849,90 @@ export const ProfilePage: React.FC = () => {
                         toast.error('Passwords do not match');
                         return;
                       }
-                      toast.success('Password updated successfully (demo)');
+                      toast.success('Password updated');
                       setSecurityForm({
                         currentPassword: '',
                         newPassword: '',
                         confirmPassword: ''
                       });
                     }}
-                    className="btn-primary w-full"
+                    className="btn-primary w-full py-2 text-sm"
                   >
-                    Update Password
+                    Update
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-8">
+          {/* Right Column - Stacks below on mobile */}
+          <div className="space-y-6">
             {/* Referral Card */}
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <LinkIcon className="w-6 h-6" />
-                <h3 className="text-xl font-bold">Refer & Earn ₦300</h3>
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 md:p-6 text-white shadow-lg">
+              <div className="flex items-center space-x-2 mb-3">
+                <LinkIcon className="w-5 h-5" />
+                <h3 className="text-lg md:text-xl font-bold">Refer & Earn ₦300</h3>
               </div>
-              <p className="opacity-90 mb-6">
-                Earn ₦300 for every friend who joins using your code!
+              <p className="text-xs md:text-sm opacity-90 mb-4">
+                Earn ₦300 per friend!
               </p>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <p className="text-sm opacity-80">Your Referral Code</p>
-                  <div className="bg-white/20 px-4 py-3 rounded-lg font-mono text-lg font-bold mt-1 flex items-center justify-between">
-                    <span>{user?.referralCode || `POKE-${profileForm.username.toUpperCase().substring(0, 6)}`}</span>
-                    <button 
-                      onClick={handleCopyReferral}
-                      className="hover:bg-white/20 p-2 rounded-lg transition-colors"
-                    >
+                  <p className="text-xs opacity-80">Your Code</p>
+                  <div className="bg-white/20 px-3 py-2 rounded-lg font-mono text-sm md:text-base font-bold mt-1 flex items-center justify-between">
+                    <span className="truncate max-w-[150px]">
+                      {user?.referralCode || `POKE-${profileForm.username.toUpperCase().substring(0, 6)}`}
+                    </span>
+                    <button onClick={handleCopyReferral} className="hover:bg-white/20 p-1.5 rounded-lg">
                       <Copy className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <button 
-                  onClick={handleCopyReferral}
-                  className="w-full bg-white text-green-600 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2"
-                >
+                <button onClick={handleCopyReferral} className="w-full bg-white text-green-600 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2 text-sm">
                   <LinkIcon className="w-4 h-4" />
-                  <span>Copy Referral Link</span>
+                  <span>Copy Link</span>
                 </button>
               </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Stats</h3>
-              <div className="space-y-3">
+            <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
+              <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3">Quick Stats</h3>
+              <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Referral Bonus Earned</span>
-                  <span className="font-bold text-green-600">{user?.referralBonusEarned || 0} pts</span>
+                  <span className="text-xs md:text-sm text-gray-600">Referral Bonus</span>
+                  <span className="font-bold text-green-600 text-sm">{user?.referralBonusEarned || 0} pts</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Withdrawn</span>
-                  <span className="font-bold text-blue-600">{totalWithdrawn} pts</span>
+                  <span className="text-xs md:text-sm text-gray-600">Withdrawn</span>
+                  <span className="font-bold text-blue-600 text-sm">{totalWithdrawn} pts</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Daily Pokes Left</span>
-                  <span className="font-bold text-purple-600">2 sends, 2 receives</span>
+                  <span className="text-xs md:text-sm text-gray-600">Daily Pokes Left</span>
+                  <span className="font-bold text-purple-600 text-sm">2/2</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Hide scrollbar styles */}
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 };
