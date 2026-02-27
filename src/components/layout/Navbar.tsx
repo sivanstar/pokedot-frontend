@@ -5,6 +5,13 @@ import { usePoke } from '../../context/PokeContext';
 import { authApi } from '../../api/auth';
 import toast from 'react-hot-toast';
 
+interface UserWithRole {
+  _id: string;
+  username: string;
+  email: string;
+  role?: 'user' | 'admin';
+}
+
 export const Navbar: React.FC = () => {
   const { user } = usePoke();
   const navigate = useNavigate();
@@ -19,7 +26,9 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const isAdmin = user?.role === 'admin';
+  // Type assertion for user
+  const typedUser = user as UserWithRole | null;
+  const isAdmin = typedUser?.role === 'admin';
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">

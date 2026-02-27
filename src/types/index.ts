@@ -1,6 +1,6 @@
 export interface User {
-  id: string;
   _id: string;
+  id?: string;
   username: string;
   email: string;
   avatar?: string;
@@ -11,11 +11,21 @@ export interface User {
   streak: number;
   loginStreak: number;
   rank: number;
-  createdAt: string;
-  updatedAt: string;
+  role?: 'user' | 'admin';
   isOnline?: boolean;
-  totalEarned: number;
-  totalWithdrawn: number;
+  isActive?: boolean;
+  referralCode?: string;
+  referralBonusEarned?: number;
+  bankDetails?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    verified?: boolean;
+  };
+  totalEarned?: number;
+  totalWithdrawn?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Poke {
@@ -50,6 +60,3 @@ export interface Notification {
   read: boolean;
   createdAt: string;
 }
-
-// Export all types
-export type { User, Poke, LeaderboardEntry, Notification };

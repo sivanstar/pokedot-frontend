@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Use environment variable with fallback
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // Function to check if token is expired
@@ -50,7 +49,9 @@ api.interceptors.request.use(
     
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Response interceptor
