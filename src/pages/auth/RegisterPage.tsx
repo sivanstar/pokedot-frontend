@@ -101,8 +101,10 @@ export const RegisterPage: React.FC = () => {
       
     } catch (error: any) {
       console.error('Registration error:', error);
+      console.error('Error response:', error.response?.data);
       
       let errorMessage = 'Registration failed. Please try again.';
+      let errorField = 'general';
       
       // Extract error message from response
       if (error.response?.data?.message) {
@@ -113,17 +115,55 @@ export const RegisterPage: React.FC = () => {
         errorMessage = error.message;
       }
       
-      // Handle specific error messages
-      if (errorMessage.toLowerCase().includes('username already exists') || 
-          errorMessage.toLowerCase().includes('username already taken')) {
-        setErrors(prev => ({ ...prev, username: 'This username is already taken' }));
-        toast.error('Username already exists', { duration: 4000 });
+      // Parse the error message to determine which field has the issue
+      const lowerCaseError = errorMessage.toLowerCase();
+      
+      // Check for username-specific errors
+      if (lowerCaseError.includes('username already exists') || 
+          lowerCaseError.includes('username already taken') ||
+          lowerCaseError.includes('username is already')) {
+        setErrors(prev => ({ 
+          ...prev, 
+          username: 'This username is already taken. Please choose another one.' 
+        }));
+        toast.error('Username already exists', { 
+          duration: 4000,
+          icon: '���'
+        });
       } 
-      else if (errorMessage.toLowerCase().includes('email already exists') || 
-               errorMessage.toLowerCase().includes('email already registered') ||
-               errorMessage.toLowerCase().includes('email already taken')) {
-        setErrors(prev => ({ ...prev, email: 'This email is already registered' }));
-        toast.error('Email already exists', { duration: 4000 });
+      // Check for email-specific errors
+      else if (lowerCaseError.includes('email already exists') || 
+               lowerCaseError.includes('email already registered') ||
+               lowerCaseError.includes('email is already') ||
+               lowerCaseError.includes('email already in use')) {
+        setErrors(prev => ({ 
+          ...prev, 
+          email: 'This email is already registered. Please use another email or login.' 
+        }));
+        toast.error('Email already registered', { 
+          duration: 4000,
+          icon: '���'
+        });
+      }
+      // Handle MongoDB duplicate key error (more specific)
+      else if (error.response?.data?.error?.includes('duplicate key')) {
+        const errorString = error.response.data.error;
+        if (errorString.includes('username')) {
+          setErrors(prev => ({ 
+            ...prev, 
+            username: 'This username is already taken. Please choose another one.' 
+          }));
+          toast.error('Username already exists', { duration: 4000 });
+        } else if (errorString.includes('email')) {
+          setErrors(prev => ({ 
+            ...prev, 
+            email: 'This email is already registered. Please use another email or login.' 
+          }));
+          toast.error('Email already registered', { duration: 4000 });
+        } else {
+          setErrors(prev => ({ ...prev, general: 'User already exists with this username or email.' }));
+          toast.error('User already exists', { duration: 4000 });
+        }
       }
       else if (error.response?.status === 400) {
         setErrors(prev => ({ ...prev, general: errorMessage }));
