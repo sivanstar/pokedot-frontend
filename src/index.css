@@ -1,73 +1,78 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-/* Custom CSS classes */
-.btn-primary {
-  background: linear-gradient(135deg, #0ea5e9, #d946ef);
-  color: white;
-  font-weight: 600;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.3s;
+@layer base {
+  :root {
+    --color-primary-50: #f0f9ff;
+    --color-primary-100: #e0f2fe;
+    --color-primary-200: #bae6fd;
+    --color-primary-300: #7dd3fc;
+    --color-primary-400: #38bdf8;
+    --color-primary-500: #0ea5e9;
+    --color-primary-600: #0284c7;
+    --color-primary-700: #0369a1;
+    --color-primary-800: #075985;
+    --color-primary-900: #0c4a6e;
+    
+    --color-secondary-50: #fdf4ff;
+    --color-secondary-100: #fae8ff;
+    --color-secondary-200: #f5d0fe;
+    --color-secondary-300: #f0abfc;
+    --color-secondary-400: #e879f9;
+    --color-secondary-500: #d946ef;
+    --color-secondary-600: #c026d3;
+    --color-secondary-700: #a21caf;
+    --color-secondary-800: #86198f;
+    --color-secondary-900: #701a75;
+  }
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300;
+  }
 }
 
-.btn-secondary {
-  background: white;
-  color: #374151;
-  font-weight: 600;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  cursor: pointer;
-  transition: background 0.3s;
+@layer utilities {
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
 }
 
-.btn-secondary:hover {
-  background: #f9fafb;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
-.dark .card {
-  background: #1f2937;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #0ea5e9, #d946ef);
+  border-radius: 4px;
 }
 
-.input-field {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  transition: all 0.3s;
-  background: white;
-  color: #111827;
-}
-
-.dark .input-field {
-  background: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
-}
-
-.input-field:focus {
-  outline: none;
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-.dark .input-field:focus {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #0284c7, #c026d3);
 }
