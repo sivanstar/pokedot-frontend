@@ -126,7 +126,7 @@ export const LoginPage: React.FC = () => {
     
     toast.success(`Password reset link sent to ${email}`, {
       duration: 4000,
-      icon: 'í³§'
+      icon: 'ï¿½ï¿½ï¿½'
     });
   };
 
@@ -179,7 +179,7 @@ export const LoginPage: React.FC = () => {
                         ? 'border-primary-200 focus:border-primary-500 focus:ring-primary-500' 
                         : ''
                   }`}
-                  placeholder="you@example.com"
+                  placeholder="Email"
                   disabled={isLoading}
                 />
                 <Mail className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
