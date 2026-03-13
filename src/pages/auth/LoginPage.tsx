@@ -13,12 +13,21 @@ export const LoginPage: React.FC = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
   // Check for session expired message on page load
-  useEffect(() => {
+   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    
     if (params.get('session') === 'expired') {
       toast.error('Your session has expired. Please login again.', {
         duration: 5000,
         icon: '⏰',
+        position: 'top-center'
+      });
+    }
+    
+    if (params.get('task') === 'required') {
+      toast.error('You need to complete a task to access the dashboard', {
+        duration: 5000,
+        icon: '⚠️',
         position: 'top-center'
       });
     }

@@ -548,7 +548,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('withdrawals')}
               className={`px-6 py-3 font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'withdrawals'
-                  ? 'border-primary-600 text-primary-600'
+                  ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -580,7 +580,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center space-x-2">
                 <Coins className="w-4 h-4" />
-                <span>Transactions</span>
+                <span></span>
               </div>
             </button>
           </div>

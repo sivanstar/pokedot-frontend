@@ -4,6 +4,7 @@ import { PokeProvider } from './context/PokeContext';
 import { WalletProvider } from './context/WalletContext';
 import { NotificationsProvider } from './context/NotificationsContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ProtectedTaskRoute } from './components/auth/ProtectedTaskRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
 import { Navbar } from './components/layout/Navbar';
 
@@ -58,48 +59,58 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 
-                {/* Protected Routes */}
+                {/* Protected Routes with Task Requirement */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <LayoutWrapper>
-                      <Dashboard />
-                    </LayoutWrapper>
+                    <ProtectedTaskRoute>
+                      <LayoutWrapper>
+                        <Dashboard />
+                      </LayoutWrapper>
+                    </ProtectedTaskRoute>
                   </ProtectedRoute>
                 } />
                 
                 <Route path="/poke" element={
                   <ProtectedRoute>
-                    <LayoutWrapper>
-                      <PokePage />
-                    </LayoutWrapper>
+                    <ProtectedTaskRoute>
+                      <LayoutWrapper>
+                        <PokePage />
+                      </LayoutWrapper>
+                    </ProtectedTaskRoute>
                   </ProtectedRoute>
                 } />
                 
                 <Route path="/profile" element={
                   <ProtectedRoute>
-                    <LayoutWrapper>
-                      <ProfilePage />
-                    </LayoutWrapper>
+                    <ProtectedTaskRoute>
+                      <LayoutWrapper>
+                        <ProfilePage />
+                      </LayoutWrapper>
+                    </ProtectedTaskRoute>
                   </ProtectedRoute>
                 } />
                 
                 <Route path="/wallet" element={
                   <ProtectedRoute>
-                    <LayoutWrapper>
-                      <WalletPage />
-                    </LayoutWrapper>
+                    <ProtectedTaskRoute>
+                      <LayoutWrapper>
+                        <WalletPage />
+                      </LayoutWrapper>
+                    </ProtectedTaskRoute>
                   </ProtectedRoute>
                 } />
                 
                 <Route path="/leaderboard" element={
                   <ProtectedRoute>
-                    <LayoutWrapper>
-                      <Leaderboard />
-                    </LayoutWrapper>
+                    <ProtectedTaskRoute>
+                      <LayoutWrapper>
+                        <Leaderboard />
+                      </LayoutWrapper>
+                    </ProtectedTaskRoute>
                   </ProtectedRoute>
                 } />
                 
-                {/* Admin Routes - Make sure this is properly configured */}
+                {/* Admin Routes - No task requirement for admin */}
                 <Route path="/admin" element={
                   <AdminRoute>
                     <AdminDashboard />
