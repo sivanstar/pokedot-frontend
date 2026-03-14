@@ -86,9 +86,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onComplete, onClos
       const data = await response.json();
       
       if (data.success) {
-        toast.success(`Task completed! +${data.pointsEarned} points earned!`, {
+        toast.success('Task completed! You can now access your dashboard.', {
           duration: 3000,
-          icon: 'í¾¯'
+          icon: 'âœ…'
         });
         onComplete();
       } else {
@@ -128,12 +128,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onComplete, onClos
           {/* Info Box */}
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
             <div className="flex items-start space-x-3">
-              <Award className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-gray-800 mb-2">Complete 1 Task to Continue</h3>
+                <h3 className="font-bold text-gray-800 mb-2">Complete this task to access your dashboard</h3>
                 <p className="text-sm text-gray-600">
-                  Watch a short ad to unlock your dashboard and earn 
-                  <span className="font-bold text-green-600 mx-1">10 bonus points!</span>
+                  Watch a short ad to unlock your dashboard.
                 </p>
               </div>
             </div>
@@ -145,7 +144,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onComplete, onClos
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
               <h4 className="text-lg font-bold text-gray-800 mb-2">Task Completed!</h4>
               <p className="text-sm text-gray-600 mb-4">
-                You've earned 10 bonus points. Click continue to access your dashboard.
+                Click continue to access your dashboard.
               </p>
               <button
                 onClick={handleComplete}
@@ -195,10 +194,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onComplete, onClos
 
               {/* Task Info */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Reward:</span>
-                  <span className="font-bold text-green-600">+10 points</span>
-                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Duration:</span>
                   <span className="font-medium text-gray-700">~5 seconds</span>
