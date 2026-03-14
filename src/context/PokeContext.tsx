@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { authApi } from '../api/auth';
 import { pokeApi } from '../api/poke';
 
@@ -70,7 +70,7 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  const syncUserFromBackend = async () => {
+  const syncUserFromBackend = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -83,35 +83,31 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Error syncing user:', error);
     }
-  };
+  }, []);
 
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      // Get fresh data
       await syncUserFromBackend();
 
-      // Get leaderboard
       const leaderboardResponse = await pokeApi.getLeaderboard();
       if (leaderboardResponse.success) {
         setTopUsers(leaderboardResponse.users || []);
       }
 
-      // Get daily limits
       await getDailyLimits();
     } catch (error) {
       console.error('Error loading user data:', error);
     }
-  };
+  }, [syncUserFromBackend]);
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
       loadUserData();
     }
     
-    // Set up periodic sync every 30 seconds
     const syncInterval = setInterval(() => {
       if (localStorage.getItem('token')) {
         syncUserFromBackend();
@@ -119,36 +115,34 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
     }, 30000);
     
     return () => clearInterval(syncInterval);
-  }, []);
+  }, [loadUserData, syncUserFromBackend]);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     await loadUserData();
-  };
+  }, [loadUserData]);
 
-  const updateUserPoints = (points: number) => {
+  const updateUserPoints = useCallback((points: number) => {
     setUser(prev => prev ? { 
       ...prev, 
       points: prev.points + points,
       totalEarned: (prev.totalEarned || 0) + points
     } : null);
-  };
+  }, []);
 
-  const incrementPokesSent = () => {
+  const incrementPokesSent = useCallback(() => {
     setUser(prev => prev ? { ...prev, pokesSent: prev.pokesSent + 1 } : null);
-  };
+  }, []);
 
-  const updateUserProfile = (updates: { username?: string; email?: string; bio?: string }) => {
+  const updateUserProfile = useCallback((updates: { username?: string; email?: string; bio?: string }) => {
     setUser(prev => prev ? { ...prev, ...updates } : null);
-  };
+  }, []);
 
-  const sendPoke = async (userId: string, adTaskId: string = 'demo-ad-task-id') => {
+  const sendPoke = useCallback(async (userId: string, adTaskId: string = 'demo-ad-task-id') => {
     try {
       const response = await pokeApi.sendPoke(userId, adTaskId);
       if (response.success) {
-        // Sync fresh data after poke
         await syncUserFromBackend();
         
-        // Update daily limits
         if (response.remainingSends !== undefined) {
           setDailyLimits(prev => ({
             ...prev,
@@ -163,9 +157,9 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
       console.error('Error sending poke:', error);
       throw error;
     }
-  };
+  }, [syncUserFromBackend]);
 
-  const getAvailableUsers = async (search?: string) => {
+  const getAvailableUsers = useCallback(async (search?: string) => {
     try {
       const response = await pokeApi.getAvailableUsers(search);
       return response;
@@ -173,9 +167,9 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
       console.error('Error getting available users:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const getDailyLimits = async () => {
+  const getDailyLimits = useCallback(async () => {
     try {
       const response = await pokeApi.getDailyLimits();
       if (response.success) {
@@ -190,29 +184,29 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
       console.error('Error getting daily limits:', error);
       throw error;
     }
+  }, []);
+
+  const value = {
+    user,
+    points: user?.points || 0,
+    pokesSent: user?.pokesSent || 0,
+    pokesReceived: user?.pokesReceived || 0,
+    streak: user?.streak || 0,
+    loginStreak: user?.loginStreak || 0,
+    topUsers,
+    dailyLimits,
+    refreshData,
+    updateUserPoints,
+    incrementPokesSent,
+    updateUserProfile,
+    sendPoke,
+    getAvailableUsers,
+    getDailyLimits,
+    syncUserFromBackend,
   };
 
   return (
-    <PokeContext.Provider
-      value={{
-        user,
-        points: user?.points || 0,
-        pokesSent: user?.pokesSent || 0,
-        pokesReceived: user?.pokesReceived || 0,
-        streak: user?.streak || 0,
-        loginStreak: user?.loginStreak || 0,
-        topUsers,
-        dailyLimits,
-        refreshData,
-        updateUserPoints,
-        incrementPokesSent,
-        updateUserProfile,
-        sendPoke,
-        getAvailableUsers,
-        getDailyLimits,
-        syncUserFromBackend,
-      }}
-    >
+    <PokeContext.Provider value={value}>
       {children}
     </PokeContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { walletApi } from '../api/wallet';
 
 interface Transaction {
@@ -47,7 +47,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [bankDetails, setBankDetails] = useState<any>(null);
   const [withdrawalInfo, setWithdrawalInfo] = useState<any>(null);
 
-  const syncWalletFromBackend = async () => {
+  const syncWalletFromBackend = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -63,9 +63,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Error syncing wallet:', error);
     }
-  };
+  }, []);
 
-  const loadWalletData = async () => {
+  const loadWalletData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -74,12 +74,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Error loading wallet:', error);
     }
-  };
+  }, [syncWalletFromBackend]);
 
   useEffect(() => {
     loadWalletData();
     
-    // Set up periodic sync every 30 seconds
     const syncInterval = setInterval(() => {
       if (localStorage.getItem('token')) {
         syncWalletFromBackend();
@@ -87,13 +86,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }, 30000);
     
     return () => clearInterval(syncInterval);
-  }, []);
+  }, [loadWalletData, syncWalletFromBackend]);
 
-  const refreshBalance = async () => {
+  const refreshBalance = useCallback(async () => {
     await syncWalletFromBackend();
-  };
+  }, [syncWalletFromBackend]);
 
-  const requestWithdrawal = async (amount: number) => {
+  const requestWithdrawal = useCallback(async (amount: number) => {
     try {
       const response = await walletApi.requestWithdrawal(amount);
       if (response.success) {
@@ -114,9 +113,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.error('Error requesting withdrawal:', error);
       throw error;
     }
-  };
+  }, [syncWalletFromBackend]);
 
-  const updateBankDetails = async (details: any) => {
+  const updateBankDetails = useCallback(async (details: any) => {
     try {
       const response = await walletApi.updateBankDetails(details);
       if (response.success) {
@@ -127,13 +126,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.error('Error updating bank details:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const addTransaction = (transaction: Transaction) => {
+  const addTransaction = useCallback((transaction: Transaction) => {
     setTransactions(prev => [transaction, ...prev.slice(0, 9)]);
-  };
+  }, []);
 
-  const canWithdrawToday = (): boolean => {
+  const canWithdrawToday = useCallback((): boolean => {
     const now = new Date();
     const day = now.getDay();
     const hour = now.getHours();
@@ -142,25 +141,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     const isWithdrawalTime = hour >= 16 && hour < 17;
     
     return isWithdrawalDay && isWithdrawalTime;
+  }, []);
+
+  const value = {
+    balance,
+    totalEarned,
+    totalWithdrawn,
+    transactions,
+    bankDetails,
+    withdrawalInfo,
+    refreshBalance,
+    requestWithdrawal,
+    updateBankDetails,
+    addTransaction,
+    canWithdrawToday,
+    syncWalletFromBackend,
   };
 
   return (
-    <WalletContext.Provider
-      value={{
-        balance,
-        totalEarned,
-        totalWithdrawn,
-        transactions,
-        bankDetails,
-        withdrawalInfo,
-        refreshBalance,
-        requestWithdrawal,
-        updateBankDetails,
-        addTransaction,
-        canWithdrawToday,
-        syncWalletFromBackend,
-      }}
-    >
+    <WalletContext.Provider value={value}>
       {children}
     </WalletContext.Provider>
   );
