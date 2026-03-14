@@ -2,10 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      fastRefresh: true,
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        ]
+      }
+    })
+  ],
   server: {
     port: 5175,
     strictPort: true,
+    hmr: {
+      overlay: true
+    }
   },
   build: {
     outDir: 'dist',
@@ -19,5 +31,9 @@ export default defineConfig({
         }
       }
     }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    exclude: []
   }
 })

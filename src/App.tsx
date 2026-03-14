@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { PokeProvider } from './context/PokeContext';
-import { WalletProvider } from './context/WalletContext';
-import { NotificationsProvider } from './context/NotificationsContext';
+import { CombinedProviders } from './context/CombinedProviders';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ProtectedTaskRoute } from './components/auth/ProtectedTaskRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
@@ -43,87 +41,83 @@ const LayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 function App() {
   return (
     <Router>
-      <PokeProvider>
-        <WalletProvider>
-          <NotificationsProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={
-                  <>
-                    <Navbar />
-                    <HomePage />
-                  </>
-                } />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                
-                {/* Protected Routes with Task Requirement */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <ProtectedTaskRoute>
-                      <LayoutWrapper>
-                        <Dashboard />
-                      </LayoutWrapper>
-                    </ProtectedTaskRoute>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/poke" element={
-                  <ProtectedRoute>
-                    <ProtectedTaskRoute>
-                      <LayoutWrapper>
-                        <PokePage />
-                      </LayoutWrapper>
-                    </ProtectedTaskRoute>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <ProtectedTaskRoute>
-                      <LayoutWrapper>
-                        <ProfilePage />
-                      </LayoutWrapper>
-                    </ProtectedTaskRoute>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/wallet" element={
-                  <ProtectedRoute>
-                    <ProtectedTaskRoute>
-                      <LayoutWrapper>
-                        <WalletPage />
-                      </LayoutWrapper>
-                    </ProtectedTaskRoute>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/leaderboard" element={
-                  <ProtectedRoute>
-                    <ProtectedTaskRoute>
-                      <LayoutWrapper>
-                        <Leaderboard />
-                      </LayoutWrapper>
-                    </ProtectedTaskRoute>
-                  </ProtectedRoute>
-                } />
-                
-                {/* Admin Routes - No task requirement for admin */}
-                <Route path="/admin" element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } />
-                
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </div>
-          </NotificationsProvider>
-        </WalletProvider>
-      </PokeProvider>
+      <CombinedProviders>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={
+              <>
+                <Navbar />
+                <HomePage />
+              </>
+            } />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            
+            {/* Protected Routes with Task Requirement */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <ProtectedTaskRoute>
+                  <LayoutWrapper>
+                    <Dashboard />
+                  </LayoutWrapper>
+                </ProtectedTaskRoute>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/poke" element={
+              <ProtectedRoute>
+                <ProtectedTaskRoute>
+                  <LayoutWrapper>
+                    <PokePage />
+                  </LayoutWrapper>
+                </ProtectedTaskRoute>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProtectedTaskRoute>
+                  <LayoutWrapper>
+                    <ProfilePage />
+                  </LayoutWrapper>
+                </ProtectedTaskRoute>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/wallet" element={
+              <ProtectedRoute>
+                <ProtectedTaskRoute>
+                  <LayoutWrapper>
+                    <WalletPage />
+                  </LayoutWrapper>
+                </ProtectedTaskRoute>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/leaderboard" element={
+              <ProtectedRoute>
+                <ProtectedTaskRoute>
+                  <LayoutWrapper>
+                    <Leaderboard />
+                  </LayoutWrapper>
+                </ProtectedTaskRoute>
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
+            
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </CombinedProviders>
     </Router>
   );
 }
