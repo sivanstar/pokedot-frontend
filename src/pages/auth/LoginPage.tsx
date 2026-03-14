@@ -12,8 +12,8 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
-  // Check for session expired message on page load
-   useEffect(() => {
+  // Check for session expired or task required messages on page load
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     
     if (params.get('session') === 'expired') {
@@ -135,7 +135,7 @@ export const LoginPage: React.FC = () => {
     
     toast.success(`Password reset link sent to ${email}`, {
       duration: 4000,
-      icon: 'ï¿½ï¿½ï¿½'
+      icon: 'í³§'
     });
   };
 
