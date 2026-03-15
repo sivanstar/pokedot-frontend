@@ -1,40 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Users, Zap, TrendingUp, Filter, Clock, RefreshCw, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Users, Zap, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import { PokeButton } from '../../components/poke/PokeButton';
 import { DailyLimitsDisplay } from '../../components/poke/DailyLimitsDisplay';
 import toast from 'react-hot-toast';
 
+interface UserData {
+  _id: string;
+  id?: string;
+  username: string;
+  points: number;
+  pokesSent: number;
+  pokesReceived: number;
+  streak: number;
+  rank: number;
+  isOnline: boolean;
+  avatar?: string;
+  canPoke?: boolean;
+  reason?: string;
+}
+
 export const PokePage: React.FC = () => {
   const { user, dailyLimits, getAvailableUsers } = usePoke();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'online' | 'top'>('all');
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await getAvailableUsers(searchQuery);
-      console.log('API Response:', response); // Debug log
       
       if (response.success) {
-        // Ensure each user has a valid ID
-        const usersWithIds = (response.users || []).map((user: any) => ({
-          ...user,
-          // Use _id if available, otherwise generate a fallback
-          id: user._id || user.id || `user_${Date.now()}_${Math.random()}`,
-          _id: user._id || user.id || `user_${Date.now()}_${Math.random()}`
-        }));
-        
-        console.log('Processed users:', usersWithIds.map(u => ({ 
-          username: u.username, 
-          id: u.id, 
-          _id: u._id 
-        }))); // Debug log
+        // Process users to ensure they have valid IDs
+        const usersWithIds = (response.users || []).map((userData: any) => ({
+          ...userData,
+          id: userData._id || userData.id,
+          _id: userData._id || userData.id
+        })).filter((userData: UserData) => userData._id); // Filter out users without IDs
         
         setAvailableUsers(usersWithIds);
       } else {
@@ -48,7 +55,7 @@ export const PokePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAvailableUsers, searchQuery]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -58,12 +65,12 @@ export const PokePage: React.FC = () => {
 
   useEffect(() => {
     loadUsers();
-  }, [searchQuery]);
+  }, [loadUsers]);
 
   // Filter users based on selected filter
   const filteredUsers = availableUsers.filter(u => {
     if (filter === 'online') return u.isOnline;
-    if (filter === 'top') return u.rank <= 10;
+    if (filter === 'top') return (u.rank || 999) <= 10;
     return true;
   });
 
@@ -71,7 +78,7 @@ export const PokePage: React.FC = () => {
   const sortedUsers = [...filteredUsers].sort((a, b) => {
     if (a.isOnline && !b.isOnline) return -1;
     if (!a.isOnline && b.isOnline) return 1;
-    return b.points - a.points;
+    return (b.points || 0) - (a.points || 0);
   });
 
   const handlePokeSuccess = (pointsEarned: number) => {
@@ -85,7 +92,8 @@ export const PokePage: React.FC = () => {
 
   const handlePokeError = (error: any) => {
     console.error('Poke error from button:', error);
-    toast.error(error.message || 'Poke failed');
+    const errorMessage = error.response?.data?.message || error.message || 'Poke failed';
+    toast.error(errorMessage);
   };
 
   return (
@@ -221,21 +229,14 @@ export const PokePage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedUsers.map((userData, index) => {
-                  // Get the userId - prefer _id, then id
-                  const userId = userData._id || userData.id;
-                  const currentUserId = user?._id || user?.id;
-                  
-                  console.log(`User ${index}:`, { 
-                    username: userData.username, 
-                    userId, 
-                    currentUserId,
-                    isSameUser: userId === currentUserId 
-                  }); // Debug log
+                {sortedUsers.map((userData) => {
+                  const userId = userData._id;
+                  const currentUserId = user?._id;
+                  const isSameUser = userId === currentUserId;
                   
                   return (
                     <div
-                      key={userId || index}
+                      key={userId}
                       className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
                     >
                       <div className="flex items-start justify-between mb-4">
@@ -278,7 +279,7 @@ export const PokePage: React.FC = () => {
                         </div>
                       </div>
                       
-                      {userId && userId !== currentUserId ? (
+                      {!isSameUser ? (
                         <div className="space-y-3">
                           {userData.canPoke === false && userData.reason && (
                             <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded-lg">
