@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Eye, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
 import { usePoke } from '../../context/PokeContext';
+import { AdModal } from './AdModal';
 import toast from 'react-hot-toast';
 
 interface PokeButtonProps {
   userId: string;
   username: string;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'primary' | 'secondary' | 'ghost';
   onPokeSuccess?: (pointsEarned: number) => void;
   onPokeError?: (error: any) => void;
 }
@@ -20,64 +18,7 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
 }) => {
   const [isPoking, setIsPoking] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
-  const [isWatchingAd, setIsWatchingAd] = useState(false);
-  const [adCompleted, setAdCompleted] = useState(false);
-  const [adWindow, setAdWindow] = useState<Window | null>(null);
   const { sendPoke, dailyLimits } = usePoke();
-
-  // AD URL - Can be configured in .env
-  const AD_URL = import.meta.env.VITE_AD_URL || 'https://otieu.com/4/10381267';
-
-  // Clean up ad window on unmount
-  useEffect(() => {
-    return () => {
-      if (adWindow && !adWindow.closed) {
-        adWindow.close();
-      }
-    };
-  }, [adWindow]);
-
-  // Check if ad window is closed
-  useEffect(() => {
-    if (!adWindow || adWindow.closed) return;
-
-    const checkClosed = setInterval(() => {
-      if (adWindow.closed) {
-        clearInterval(checkClosed);
-        if (!adCompleted) {
-          setIsWatchingAd(false);
-          toast.error('Please complete the ad to poke');
-        }
-      }
-    }, 1000);
-
-    return () => clearInterval(checkClosed);
-  }, [adWindow, adCompleted]);
-
-  const openAdWindow = () => {
-    if (!userId) {
-      toast.error('Cannot poke: User ID is missing');
-      return;
-    }
-    
-    // Open ad in new window
-    const window = window.open(AD_URL, '_blank', 'width=800,height=600');
-    
-    if (!window) {
-      toast.error('Please allow popups to watch ads');
-      return;
-    }
-    
-    setAdWindow(window);
-    setIsWatchingAd(true);
-    
-    // Simulate 5 second ad watching
-    setTimeout(() => {
-      setIsWatchingAd(false);
-      setAdCompleted(true);
-      toast.success('Ad completed! You can now poke.', { duration: 2000 });
-    }, 5000);
-  };
 
   const handlePokeClick = () => {
     if (dailyLimits.remainingSends <= 0) {
@@ -89,10 +30,9 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
 
   const handleAdComplete = async () => {
     setShowAdModal(false);
-    setAdCompleted(false);
     
     if (dailyLimits.remainingSends <= 0) {
-      toast.error('Daily limit reached! You can only poke 2 users per day.');
+      toast.error('Daily limit reached!');
       return;
     }
     
@@ -116,12 +56,8 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
     }
   };
 
-  const handleSkipAd = () => {
+  const handleCloseModal = () => {
     setShowAdModal(false);
-    setAdCompleted(false);
-    if (adWindow && !adWindow.closed) {
-      adWindow.close();
-    }
   };
 
   return (
@@ -144,51 +80,12 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
         )}
       </button>
 
-      {/* Ad Modal */}
-      {showAdModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Watch Ad to Poke</h3>
-            
-            <div className="bg-blue-50 rounded-xl p-6 text-center mb-4">
-              <Eye className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-              <p className="text-gray-700 mb-4">
-                Watch a short ad to poke {username} and earn 50 points!
-              </p>
-              
-              {isWatchingAd ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-3"></div>
-                  <p className="text-gray-600">Watching ad... Please wait.</p>
-                </div>
-              ) : adCompleted ? (
-                <button
-                  onClick={handleAdComplete}
-                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700"
-                >
-                  Complete Poke Now
-                </button>
-              ) : (
-                <button
-                  onClick={openAdWindow}
-                  className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700"
-                >
-                  Watch Ad
-                </button>
-              )}
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={handleSkipAd}
-                className="text-gray-500 hover:text-gray-700 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdModal
+        isOpen={showAdModal}
+        username={username}
+        onAdComplete={handleAdComplete}
+        onClose={handleCloseModal}
+      />
     </>
   );
 };
