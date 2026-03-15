@@ -1,123 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { CombinedProviders } from './context/CombinedProviders';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { ProtectedTaskRoute } from './components/auth/ProtectedTaskRoute';
-import { AdminRoute } from './components/auth/AdminRoute';
-import { Navbar } from './components/layout/Navbar';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-// Auth Pages
-import { LoginPage } from './pages/auth/LoginPage';
-import { RegisterPage } from './pages/auth/RegisterPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
-
-// Main Pages
-import { Dashboard } from './pages/dashboard/Dashboard';
-import { PokePage } from './pages/poke/PokePage';
-import { ProfilePage } from './pages/profile/ProfilePage';
-import { WalletPage } from './pages/wallet/WalletPage';
-import { Leaderboard } from './pages/leaderboard/Leaderboard';
-
-// Admin Pages
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-
-// Home Page
-import { HomePage } from './pages/home/HomePage';
-
-// Component to conditionally show Navbar
-const LayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const location = useLocation();
-  const isAuthPage = ['/login', '/register', '/forgot-password', '/'].includes(location.pathname);
-  const isAdminPage = location.pathname.startsWith('/admin');
-  
-  return (
-    <>
-      {!isAuthPage && !isAdminPage && <Navbar />}
-      {children}
-    </>
-  );
-};
+const HomePage = () => <div className="p-8"><h1 className="text-2xl">POKEDOT</h1></div>;
 
 function App() {
   return (
     <Router>
-      <CombinedProviders>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={
-              <>
-                <Navbar />
-                <HomePage />
-              </>
-            } />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            
-            {/* Protected Routes with Task Requirement */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <ProtectedTaskRoute>
-                  <LayoutWrapper>
-                    <Dashboard />
-                  </LayoutWrapper>
-                </ProtectedTaskRoute>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/poke" element={
-              <ProtectedRoute>
-                <ProtectedTaskRoute>
-                  <LayoutWrapper>
-                    <PokePage />
-                  </LayoutWrapper>
-                </ProtectedTaskRoute>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <ProtectedTaskRoute>
-                  <LayoutWrapper>
-                    <ProfilePage />
-                  </LayoutWrapper>
-                </ProtectedTaskRoute>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/wallet" element={
-              <ProtectedRoute>
-                <ProtectedTaskRoute>
-                  <LayoutWrapper>
-                    <WalletPage />
-                  </LayoutWrapper>
-                </ProtectedTaskRoute>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/leaderboard" element={
-              <ProtectedRoute>
-                <ProtectedTaskRoute>
-                  <LayoutWrapper>
-                    <Leaderboard />
-                  </LayoutWrapper>
-                </ProtectedTaskRoute>
-              </ProtectedRoute>
-            } />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            } />
-            
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </CombinedProviders>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+      </Routes>
     </Router>
   );
 }
