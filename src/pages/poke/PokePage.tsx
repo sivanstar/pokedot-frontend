@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Users, Zap, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
-import { PokeButton } from '../../components/poke/PokeButton';
+import { PokeButton } from '../../components/poke/PokeButtonSimple';
 import { DailyLimitsDisplay } from '../../components/poke/DailyLimitsDisplay';
 import toast from 'react-hot-toast';
 
