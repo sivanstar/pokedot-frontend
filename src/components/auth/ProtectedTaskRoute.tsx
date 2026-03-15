@@ -74,7 +74,6 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
     );
   }
 
-  // Show task modal if needed
   if (needsTask) {
     return (
       <>
@@ -83,7 +82,6 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
           onComplete={handleTaskComplete}
           onClose={handleTaskClose}
         />
-        {/* Show a simple loading state while modal is open */}
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-pulse">
@@ -98,6 +96,5 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
     );
   }
 
-  // If no task needed, render children
   return <>{children}</>;
 };
