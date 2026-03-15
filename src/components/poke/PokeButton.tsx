@@ -18,7 +18,7 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
 }) => {
   const [isPoking, setIsPoking] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
-  const { sendPoke, dailyLimits } = usePoke();
+  const { sendPoke, dailyLimits, getDailyLimits } = usePoke();
 
   const handlePokeClick = () => {
     if (dailyLimits.remainingSends <= 0) {
@@ -43,6 +43,8 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
       const response = await sendPoke(userId, adTaskId);
       
       if (response?.success) {
+        // Refresh daily limits after successful poke
+        await getDailyLimits();
         toast.success(`Poked ${username}! +50 points earned`);
         if (onPokeSuccess) onPokeSuccess(50);
       }
@@ -60,12 +62,24 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
     setShowAdModal(false);
   };
 
+  // Determine button text based on daily limits
+  const getButtonText = () => {
+    if (dailyLimits.remainingSends <= 0) {
+      return 'Daily Limit Reached';
+    }
+    return `Poke ${username}`;
+  };
+
   return (
     <>
       <button
         onClick={handlePokeClick}
         disabled={isPoking || dailyLimits.remainingSends <= 0}
-        className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`w-full py-3 px-4 rounded-lg font-semibold transition-opacity ${
+          dailyLimits.remainingSends <= 0
+            ? 'bg-gray-400 text-white cursor-not-allowed'
+            : 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:opacity-90'
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {isPoking ? (
           <span className="flex items-center justify-center">
@@ -76,7 +90,7 @@ export const PokeButton: React.FC<PokeButtonProps> = ({
             Poking...
           </span>
         ) : (
-          `Poke ${username} for 50 points (${dailyLimits.remainingSends} left)`
+          getButtonText()
         )}
       </button>
 
