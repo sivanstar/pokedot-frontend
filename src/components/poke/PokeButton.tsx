@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Zap, Lock } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import toast from 'react-hot-toast';
 
@@ -15,88 +14,62 @@ interface PokeButtonProps {
 export const PokeButton: React.FC<PokeButtonProps> = ({
   userId,
   username,
-  size = 'md',
-  variant = 'primary',
   onPokeSuccess,
   onPokeError,
 }) => {
   const [isPoking, setIsPoking] = useState(false);
-  const { sendPoke, dailyLimits, getDailyLimits } = usePoke();
+  const { sendPoke, dailyLimits } = usePoke();
 
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  };
-
-  const variants = {
-    primary: 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:opacity-90',
-    secondary: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-    ghost: 'bg-transparent text-primary-600 hover:bg-primary-50',
-  };
-
-  const handlePoke = async () => {
-    if (isPoking || dailyLimits.remainingSends <= 0 || !userId) {
-      console.log('Cannot poke:', { isPoking, remainingSends: dailyLimits.remainingSends, userId });
+  const handleClick = async () => {
+    if (isPoking || !userId) return;
+    
+    // Check daily limit
+    if (dailyLimits.remainingSends <= 0) {
+      toast.error('Daily limit reached! You can only poke 2 users per day.');
       return;
     }
-    
-    console.log('Starting poke to:', username, 'with ID:', userId);
+
     setIsPoking(true);
     
     try {
-      const adTaskId = `ad_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      console.log('Sending poke with task ID:', adTaskId);
+      // Generate a unique ad task ID
+      const adTaskId = `ad_${Date.now()}`;
       
+      // Call the API
       const response = await sendPoke(userId, adTaskId);
-      console.log('Poke response:', response);
       
-      if (response.success) {
-        toast.success(`Poked ${username}! +50 points earned`, { icon: '⚡' });
-        await getDailyLimits();
+      if (response?.success) {
+        toast.success(`Poked ${username}! +50 points earned`);
         if (onPokeSuccess) onPokeSuccess(50);
+      } else {
+        throw new Error(response?.message || 'Failed to poke');
       }
     } catch (error: any) {
       console.error('Poke error:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to send poke';
-      toast.error(errorMsg);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to send poke';
+      toast.error(errorMessage);
       if (onPokeError) onPokeError(error);
     } finally {
       setIsPoking(false);
     }
   };
 
-  const getButtonText = () => {
-    if (dailyLimits.remainingSends <= 0) return 'Daily Limit Reached';
-    return `Poke for 50 points!`;
-  };
-
-  const getButtonIcon = () => {
-    if (dailyLimits.remainingSends <= 0) return <Lock className="w-4 h-4" />;
-    return <Zap className="w-4 h-4" />;
-  };
-
-  const isButtonDisabled = isPoking || dailyLimits.remainingSends <= 0 || !userId;
-
   return (
     <button
-      onClick={handlePoke}
-      disabled={isButtonDisabled}
-      className={`${sizes[size]} ${variants[variant]} rounded-lg font-semibold flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 w-full`}
+      onClick={handleClick}
+      disabled={isPoking || dailyLimits.remainingSends <= 0}
+      className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isPoking ? (
-        <>
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span>Poking...</span>
-        </>
+        <span className="flex items-center justify-center">
+          <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          Poking...
+        </span>
       ) : (
-        <>
-          {getButtonIcon()}
-          <span>{getButtonText()}</span>
-          {dailyLimits.remainingSends > 0 && (
-            <span className="text-xs opacity-80">({dailyLimits.remainingSends} left)</span>
-          )}
-        </>
+        `Poke ${username} for 50 points`
       )}
     </button>
   );
