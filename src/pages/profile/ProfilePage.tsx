@@ -7,7 +7,8 @@ import {
   Upload, XCircle, CheckCircle,
   Banknote, AlertCircle, Wallet,
   Award, Medal, Target, Clock,
-  Flame, Copy, RefreshCw
+  Flame, Copy, RefreshCw, MessageCircle,
+  Send, Twitter, Instagram, Facebook
 } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import { useWallet } from '../../context/WalletContext';
@@ -29,7 +30,7 @@ export const ProfilePage: React.FC = () => {
   const { addNotification } = useNotifications();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'security' | 'stats'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'security' | 'stats' | 'contact'>('profile');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -65,7 +66,19 @@ export const ProfilePage: React.FC = () => {
     confirmPassword: '',
   });
 
-  // ==================== LOAD USER DATA FROM CONTEXT ====================
+  // Social Links
+  const socialLinks = {
+    whatsappGroup: 'https://chat.whatsapp.com/your-group-link',
+    whatsappChannel: 'https://whatsapp.com/channel/your-channel-link',
+    telegram: 'https://t.me/pokedot_official',
+    tiktok: 'https://tiktok.com/@pokedot',
+    instagram: 'https://instagram.com/pokedot',
+    twitter: 'https://twitter.com/pokedot',
+    facebook: 'https://facebook.com/pokedot',
+    email: 'support@pokedot.com'
+  };
+
+  // Load user data from context
   useEffect(() => {
     if (user) {
       setProfileForm({
@@ -74,15 +87,13 @@ export const ProfilePage: React.FC = () => {
         email: user.email || ''
       });
       
-      // Load avatar from user data if available (from backend)
       if (user.avatar) {
         setAvatarUrl(user.avatar);
       }
     }
   }, [user]);
 
-  // ==================== AVATAR PERSISTENCE ====================
-  // Load avatar from localStorage as fallback (on mount only)
+  // Load avatar from localStorage as fallback
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar && !avatarUrl) {
@@ -90,14 +101,14 @@ export const ProfilePage: React.FC = () => {
     }
   }, []);
 
-  // Save avatar to localStorage whenever it changes (for persistence)
+  // Save avatar to localStorage
   useEffect(() => {
     if (avatarUrl) {
       localStorage.setItem('userAvatar', avatarUrl);
     }
   }, [avatarUrl]);
 
-  // ==================== BANK DETAILS FROM WALLET CONTEXT ====================
+  // Load bank details from wallet context
   useEffect(() => {
     if (bankDetails) {
       setAccountForm({
@@ -109,7 +120,7 @@ export const ProfilePage: React.FC = () => {
     }
   }, [bankDetails]);
 
-  // ==================== GET USER POSITION ====================
+  // Get user position
   useEffect(() => {
     const getPosition = async () => {
       try {
@@ -129,14 +140,12 @@ export const ProfilePage: React.FC = () => {
     getPosition();
   }, [user]);
 
-  // ==================== HANDLE REFRESH ====================
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await syncUserFromBackend();
       await syncWalletFromBackend();
       
-      // Refresh position
       const response = await fetch(`${import.meta.env.VITE_API_URL}/users/position`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -156,15 +165,13 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // ==================== AVATAR UPLOAD ====================
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     
     if (!file) return;
 
-    // Validate file
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       toast.error('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
@@ -180,7 +187,6 @@ export const ProfilePage: React.FC = () => {
     setUploadProgress(0);
 
     try {
-      // Simulate upload progress
       const simulateUpload = () => {
         return new Promise<void>((resolve) => {
           let progress = 0;
@@ -198,15 +204,12 @@ export const ProfilePage: React.FC = () => {
 
       await simulateUpload();
 
-      // Convert to base64 for storage
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64String = reader.result as string;
         
-        // Update local state (will trigger localStorage save via useEffect)
         setAvatarUrl(base64String);
         
-        // Update user profile in backend
         try {
           await authApi.updateProfile({ avatar: base64String });
           await syncUserFromBackend();
@@ -222,7 +225,6 @@ export const ProfilePage: React.FC = () => {
         } catch (error) {
           console.error('Error updating avatar:', error);
           toast.error('Failed to save avatar to server');
-          // Revert on error
           setAvatarUrl(null);
           localStorage.removeItem('userAvatar');
         }
@@ -246,7 +248,6 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // ==================== REMOVE AVATAR ====================
   const removeAvatar = async () => {
     if (avatarUrl && avatarUrl.startsWith('blob:')) {
       URL.revokeObjectURL(avatarUrl);
@@ -254,7 +255,6 @@ export const ProfilePage: React.FC = () => {
     setAvatarUrl(null);
     localStorage.removeItem('userAvatar');
     
-    // Update backend
     try {
       await authApi.updateProfile({ avatar: '' });
       await syncUserFromBackend();
@@ -273,10 +273,8 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // ==================== PROFILE SAVE ====================
   const handleProfileSave = async () => {
     try {
-      // Update bio only (username can't be changed for now)
       await authApi.updateProfile({
         bio: profileForm.bio
       });
@@ -298,15 +296,12 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // ==================== ACCOUNT SAVE (TO BACKEND) ====================
   const handleAccountSave = async () => {
-    // Validate required fields
     if (!accountForm.bankName.trim() || !accountForm.accountNumber.trim() || !accountForm.accountName.trim()) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Validate account number (basic validation)
     if (!/^\d+$/.test(accountForm.accountNumber)) {
       toast.error('Account number must contain only digits');
       return;
@@ -318,14 +313,12 @@ export const ProfilePage: React.FC = () => {
     }
 
     try {
-      // Save to backend via API
       const response = await walletApi.updateBankDetails(accountForm);
       
       if (response.success) {
         setHasAccountDetails(true);
         setIsEditingAccount(false);
         
-        // Refresh wallet data to get updated bank details
         await syncWalletFromBackend();
         
         addNotification({
@@ -343,9 +336,7 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // ==================== ACCOUNT CANCEL ====================
   const handleAccountCancel = () => {
-    // Reset to previously saved values from wallet context
     if (bankDetails) {
       setAccountForm({
         bankName: bankDetails.bankName || '',
@@ -356,7 +347,6 @@ export const ProfilePage: React.FC = () => {
     setIsEditingAccount(false);
   };
 
-  // ==================== COPY REFERRAL ====================
   const handleCopyReferral = () => {
     const referralCode = user?.referralCode || `POKE-${user?.username?.toUpperCase().substring(0, 6)}`;
     navigator.clipboard.writeText(`https://pokedot.com/ref/${referralCode}`);
@@ -371,7 +361,11 @@ export const ProfilePage: React.FC = () => {
     toast.success('Referral link copied!');
   };
 
-  // ==================== FORMAT HELPERS ====================
+  const handleCopySocialLink = (platform: string, link: string) => {
+    navigator.clipboard.writeText(link);
+    toast.success(`${platform} link copied!`);
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     try {
@@ -388,7 +382,7 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-4 md:py-8">
       <div className="container mx-auto px-3 md:px-4 max-w-6xl">
-        {/* Profile Header - Mobile Optimized */}
+        {/* Profile Header */}
         <div className="bg-gradient-to-r from-primary-500 via-purple-600 to-secondary-600 rounded-2xl md:rounded-3xl p-6 md:p-8 mb-6 md:mb-8 text-white shadow-xl">
           <div className="flex flex-col items-center md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-8">
             {/* Avatar with Upload */}
@@ -517,7 +511,7 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards - Mobile: 2 columns */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -550,7 +544,7 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs - Horizontal Scroll on Mobile */}
+        {/* Tabs */}
         <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-1 mb-6 md:mb-8 bg-white rounded-xl shadow p-1 border border-gray-100 hide-scrollbar">
           <button
             onClick={() => setActiveTab('profile')}
@@ -604,14 +598,27 @@ export const ProfilePage: React.FC = () => {
               <span>Security</span>
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('contact')}
+            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+              activeTab === 'contact'
+                ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <div className="flex items-center justify-center space-x-1 md:space-x-2">
+              <MessageCircle className="w-4 h-4" />
+              <span>Contact</span>
+            </div>
+          </button>
         </div>
 
-        {/* Tab Content - Stack on Mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* Left Column - Full width on mobile */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Profile Tab */}
-            {activeTab === 'profile' && (
+        {/* Tab Content - Different layouts per tab */}
+        {activeTab === 'profile' ? (
+          /* Profile Tab - Full width layout with referral card in right column */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* Left Column - Profile Content */}
+            <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
                 <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">About Me</h3>
                 
@@ -656,265 +663,438 @@ export const ProfilePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Stats Tab */}
-            {activeTab === 'stats' && (
-              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Performance Stats</h3>
-                
-                <div className="space-y-4 md:space-y-6">
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="text-xs md:text-sm text-gray-600">Global Rank</span>
-                      <span className="font-bold text-primary-600 text-sm md:text-base">#{position?.position || user?.rank || 999}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
-                      <div 
-                        className="bg-gradient-to-r from-primary-500 to-secondary-500 h-1.5 md:h-2 rounded-full"
-                        style={{ width: `${position?.percentage || 0}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Top {position?.percentage || 0}%
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
-                    <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
-                      <p className="text-xs text-blue-600 mb-1">Login Streak</p>
-                      <div className="flex items-center">
-                        <Flame className="w-4 h-4 text-orange-500 mr-1 md:mr-2" />
-                        <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.loginStreak || 0}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-green-50 p-3 md:p-4 rounded-lg">
-                      <p className="text-xs text-green-600 mb-1">Poke Streak</p>
-                      <div className="flex items-center">
-                        <Zap className="w-4 h-4 text-yellow-500 mr-1 md:mr-2" />
-                        <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.streak || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t">
-                    <div>
-                      <p className="text-xs text-gray-600">Pokes Sent</p>
-                      <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesSent || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600">Pokes Received</p>
-                      <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesReceived || 0}</p>
-                    </div>
-                  </div>
+            {/* Right Column - Referral Card and Quick Stats (Only on Profile Tab) */}
+            <div className="space-y-6">
+              {/* Referral Card */}
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 md:p-6 text-white shadow-lg">
+                <div className="flex items-center space-x-2 mb-3">
+                  <LinkIcon className="w-5 h-5" />
+                  <h3 className="text-lg md:text-xl font-bold">Refer & Earn ₦300</h3>
                 </div>
-              </div>
-            )}
-
-            {/* Account Tab */}
-            {activeTab === 'account' && (
-              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-                <div className="flex items-center justify-between mb-4 md:mb-6">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-800">Bank Details</h3>
-                  {!isEditingAccount && (
-                    <button
-                      onClick={() => setIsEditingAccount(true)}
-                      className="text-primary-600 hover:text-primary-500 text-sm md:text-base font-medium"
-                    >
-                      {hasAccountDetails ? 'Edit' : 'Add'}
-                    </button>
-                  )}
-                </div>
-
-                {hasAccountDetails && !isEditingAccount ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-3">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Bank Name</p>
-                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.bankName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Account Number</p>
-                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountNumber}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Account Holder</p>
-                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountName}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
-                      <div className="flex items-start space-x-2">
-                        <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-yellow-700">
-                          Min withdrawal: 2,000 points
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3 md:space-y-4">
-                    <div>
-                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Bank Name</label>
-                      <input
-                        type="text"
-                        value={accountForm.bankName}
-                        onChange={(e) => setAccountForm({...accountForm, bankName: e.target.value})}
-                        className="input-field text-sm"
-                        placeholder="e.g., GTBank"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Number</label>
-                      <input
-                        type="text"
-                        value={accountForm.accountNumber}
-                        onChange={(e) => setAccountForm({...accountForm, accountNumber: e.target.value})}
-                        className="input-field text-sm"
-                        placeholder="0123456789"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Holder</label>
-                      <input
-                        type="text"
-                        value={accountForm.accountName}
-                        onChange={(e) => setAccountForm({...accountForm, accountName: e.target.value})}
-                        className="input-field text-sm"
-                        placeholder="John Doe"
-                      />
-                    </div>
-
-                    {isEditingAccount && (
-                      <div className="flex space-x-2 pt-3">
-                        <button
-                          onClick={handleAccountCancel}
-                          className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 text-sm"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleAccountSave}
-                          className="flex-1 btn-primary py-2 text-sm"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Security Tab */}
-            {activeTab === 'security' && (
-              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Change Password</h3>
-                
-                <div className="space-y-3 md:space-y-4">
+                <p className="text-xs md:text-sm opacity-90 mb-4">
+                  Earn ₦300 for every friend who joins using your code!
+                </p>
+                <div className="space-y-3">
                   <div>
-                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Current Password</label>
-                    <input
-                      type="password"
-                      value={securityForm.currentPassword}
-                      onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
-                      className="input-field text-sm"
-                      placeholder="••••••••"
-                    />
+                    <p className="text-xs opacity-80">Your Code</p>
+                    <div className="bg-white/20 px-3 py-2 rounded-lg font-mono text-sm md:text-base font-bold mt-1 flex items-center justify-between">
+                      <span className="truncate max-w-[150px]">
+                        {user?.referralCode || `POKE-${profileForm.username.toUpperCase().substring(0, 6)}`}
+                      </span>
+                      <button onClick={handleCopyReferral} className="hover:bg-white/20 p-1.5 rounded-lg">
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs md:text-sm text-gray-700 mb-1">New Password</label>
-                    <input
-                      type="password"
-                      value={securityForm.newPassword}
-                      onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
-                      className="input-field text-sm"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Confirm</label>
-                    <input
-                      type="password"
-                      value={securityForm.confirmPassword}
-                      onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
-                      className="input-field text-sm"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (securityForm.newPassword !== securityForm.confirmPassword) {
-                        toast.error('Passwords do not match');
-                        return;
-                      }
-                      toast.success('Password updated');
-                      setSecurityForm({
-                        currentPassword: '',
-                        newPassword: '',
-                        confirmPassword: ''
-                      });
-                    }}
-                    className="btn-primary w-full py-2 text-sm"
+                  <button 
+                    onClick={handleCopyReferral}
+                    className="w-full bg-white text-green-600 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2 text-sm"
                   >
-                    Update
+                    <LinkIcon className="w-4 h-4" />
+                    <span>Copy Link</span>
                   </button>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Right Column - Stacks below on mobile */}
-          <div className="space-y-6">
-            {/* Referral Card */}
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 md:p-6 text-white shadow-lg">
-              <div className="flex items-center space-x-2 mb-3">
-                <LinkIcon className="w-5 h-5" />
-                <h3 className="text-lg md:text-xl font-bold">Refer & Earn ₦300</h3>
-              </div>
-              <p className="text-xs md:text-sm opacity-90 mb-4">
-                Earn ₦300 per friend!
-              </p>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs opacity-80">Your Code</p>
-                  <div className="bg-white/20 px-3 py-2 rounded-lg font-mono text-sm md:text-base font-bold mt-1 flex items-center justify-between">
-                    <span className="truncate max-w-[150px]">
-                      {user?.referralCode || `POKE-${profileForm.username.toUpperCase().substring(0, 6)}`}
-                    </span>
-                    <button onClick={handleCopyReferral} className="hover:bg-white/20 p-1.5 rounded-lg">
-                      <Copy className="w-4 h-4" />
-                    </button>
+              {/* Quick Stats */}
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
+                <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3">Quick Stats</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs md:text-sm text-gray-600">Referral Bonus</span>
+                    <span className="font-bold text-green-600 text-sm">{user?.referralBonusEarned || 0} pts</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs md:text-sm text-gray-600">Withdrawn</span>
+                    <span className="font-bold text-blue-600 text-sm">{totalWithdrawn} pts</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs md:text-sm text-gray-600">Daily Pokes Left</span>
+                    <span className="font-bold text-purple-600 text-sm">2/2</span>
                   </div>
                 </div>
-                <button onClick={handleCopyReferral} className="w-full bg-white text-green-600 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center space-x-2 text-sm">
-                  <LinkIcon className="w-4 h-4" />
-                  <span>Copy Link</span>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'stats' ? (
+          /* Stats Tab - Full width only */
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Performance Stats</h3>
+              
+              <div className="space-y-4 md:space-y-6">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-xs md:text-sm text-gray-600">Global Rank</span>
+                    <span className="font-bold text-primary-600 text-sm md:text-base">#{position?.position || user?.rank || 999}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
+                    <div 
+                      className="bg-gradient-to-r from-primary-500 to-secondary-500 h-1.5 md:h-2 rounded-full"
+                      style={{ width: `${position?.percentage || 0}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Top {position?.percentage || 0}%
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
+                    <p className="text-xs text-blue-600 mb-1">Login Streak</p>
+                    <div className="flex items-center">
+                      <Flame className="w-4 h-4 text-orange-500 mr-1 md:mr-2" />
+                      <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.loginStreak || 0}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 p-3 md:p-4 rounded-lg">
+                    <p className="text-xs text-green-600 mb-1">Poke Streak</p>
+                    <div className="flex items-center">
+                      <Zap className="w-4 h-4 text-yellow-500 mr-1 md:mr-2" />
+                      <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.streak || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t">
+                  <div>
+                    <p className="text-xs text-gray-600">Pokes Sent</p>
+                    <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesSent || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Pokes Received</p>
+                    <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesReceived || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'account' ? (
+          /* Account Tab - Full width only */
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800">Bank Details</h3>
+                {!isEditingAccount && (
+                  <button
+                    onClick={() => setIsEditingAccount(true)}
+                    className="text-primary-600 hover:text-primary-500 text-sm md:text-base font-medium"
+                  >
+                    {hasAccountDetails ? 'Edit' : 'Add'}
+                  </button>
+                )}
+              </div>
+
+              {hasAccountDetails && !isEditingAccount ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Bank Name</p>
+                      <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.bankName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Account Number</p>
+                      <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Account Holder</p>
+                      <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountName}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-yellow-700">
+                        Min withdrawal: 2,000 points
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 md:space-y-4">
+                  <div>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Bank Name</label>
+                    <input
+                      type="text"
+                      value={accountForm.bankName}
+                      onChange={(e) => setAccountForm({...accountForm, bankName: e.target.value})}
+                      className="input-field text-sm"
+                      placeholder="e.g., GTBank"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Number</label>
+                    <input
+                      type="text"
+                      value={accountForm.accountNumber}
+                      onChange={(e) => setAccountForm({...accountForm, accountNumber: e.target.value})}
+                      className="input-field text-sm"
+                      placeholder="0123456789"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Holder</label>
+                    <input
+                      type="text"
+                      value={accountForm.accountName}
+                      onChange={(e) => setAccountForm({...accountForm, accountName: e.target.value})}
+                      className="input-field text-sm"
+                      placeholder="John Doe"
+                    />
+                  </div>
+
+                  {isEditingAccount && (
+                    <div className="flex space-x-2 pt-3">
+                      <button
+                        onClick={handleAccountCancel}
+                        className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 text-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAccountSave}
+                        className="flex-1 btn-primary py-2 text-sm"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : activeTab === 'security' ? (
+          /* Security Tab - Full width only */
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Change Password</h3>
+              
+              <div className="space-y-3 md:space-y-4">
+                <div>
+                  <label className="block text-xs md:text-sm text-gray-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={securityForm.currentPassword}
+                    onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
+                    className="input-field text-sm"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={securityForm.newPassword}
+                    onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
+                    className="input-field text-sm"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm text-gray-700 mb-1">Confirm</label>
+                  <input
+                    type="password"
+                    value={securityForm.confirmPassword}
+                    onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
+                    className="input-field text-sm"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    if (securityForm.newPassword !== securityForm.confirmPassword) {
+                      toast.error('Passwords do not match');
+                      return;
+                    }
+                    toast.success('Password updated');
+                    setSecurityForm({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: ''
+                    });
+                  }}
+                  className="btn-primary w-full py-2 text-sm"
+                >
+                  Update
                 </button>
               </div>
             </div>
+          </div>
+        ) : (
+          /* Contact Tab - Full width only */
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Connect With Us</h3>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Join our communities to stay updated with the latest news, tips, and connect with other POKEDOT users!
+                </p>
 
-            {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border border-gray-100">
-              <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3">Quick Stats</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-sm text-gray-600">Referral Bonus</span>
-                  <span className="font-bold text-green-600 text-sm">{user?.referralBonusEarned || 0} pts</span>
+                {/* WhatsApp Group */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <MessageCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">WhatsApp Group</p>
+                      <p className="text-xs text-gray-500">Join our community group</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.whatsappGroup, '_blank')}
+                    className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Join
+                  </button>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-sm text-gray-600">Withdrawn</span>
-                  <span className="font-bold text-blue-600 text-sm">{totalWithdrawn} pts</span>
+
+                {/* WhatsApp Channel */}
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <Send className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">WhatsApp Channel</p>
+                      <p className="text-xs text-gray-500">Get updates & announcements</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.whatsappChannel, '_blank')}
+                    className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Follow
+                  </button>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs md:text-sm text-gray-600">Daily Pokes Left</span>
-                  <span className="font-bold text-purple-600 text-sm">2/2</span>
+
+                {/* Telegram Channel */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-600 rounded-lg">
+                      <Send className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">Telegram Channel</p>
+                      <p className="text-xs text-gray-500">Join our Telegram community</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.telegram, '_blank')}
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Join
+                  </button>
+                </div>
+
+                {/* TikTok */}
+                <div className="flex items-center justify-between p-3 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-black rounded-lg">
+                      <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.96 2.89 2.89 0 0 1 2.17-4.86 2.88 2.88 0 0 1 1.11.22v-3.6a6.34 6.34 0 0 0-1.12-.1 6.35 6.35 0 0 0 0 12.7 6.35 6.35 0 0 0 6.36-6.36v-7.1a8.17 8.17 0 0 0 4.77 1.48v-3.5a4.83 4.83 0 0 1-2.77-.81z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">TikTok</p>
+                      <p className="text-xs text-gray-300">@pokedot</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.tiktok, '_blank')}
+                    className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Follow
+                  </button>
+                </div>
+
+                {/* Instagram */}
+                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition-opacity">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <Instagram className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">Instagram</p>
+                      <p className="text-xs text-white/80">@pokedot</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.instagram, '_blank')}
+                    className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Follow
+                  </button>
+                </div>
+
+                {/* Twitter/X */}
+                <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gray-900 rounded-lg">
+                      <Twitter className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">Twitter/X</p>
+                      <p className="text-xs text-gray-300">@pokedot</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.twitter, '_blank')}
+                    className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Follow
+                  </button>
+                </div>
+
+                {/* Facebook */}
+                <div className="flex items-center justify-between p-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-700 rounded-lg">
+                      <Facebook className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">Facebook</p>
+                      <p className="text-xs text-white/80">/pokedot</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(socialLinks.facebook, '_blank')}
+                    className="px-3 py-1.5 bg-white text-blue-600 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Like
+                  </button>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gray-600 rounded-lg">
+                      <Mail className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">Email Support</p>
+                      <p className="text-xs text-gray-500">{socialLinks.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(socialLinks.email);
+                      toast.success('Email copied!');
+                    }}
+                    className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Copy
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Hide scrollbar styles */}
