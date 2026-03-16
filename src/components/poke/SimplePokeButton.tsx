@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Zap, Lock, Eye, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { usePoke } from '../../context/PokeContext';
 import api from '../../api/index';
 
 interface SimplePokeButtonProps {
@@ -23,7 +24,9 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
   const [isPoking, setIsPoking] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const [adCompleted, setAdCompleted] = useState(false);
-  const [remainingSends, setRemainingSends] = useState(2);
+  
+  // Get daily limits from context
+  const { dailyLimits, getDailyLimits, syncUserFromBackend, sendPoke } = usePoke();
 
   const AD_URL = import.meta.env.VITE_AD_URL || 'https://otieu.com/4/10381267';
 
@@ -39,8 +42,13 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
     ghost: 'bg-transparent text-primary-600 hover:bg-primary-50',
   };
 
+  // Refresh daily limits when component mounts
+  useEffect(() => {
+    getDailyLimits();
+  }, []);
+
   const handlePokeClick = () => {
-    if (isPoking || remainingSends <= 0) return;
+    if (isPoking || dailyLimits.remainingSends <= 0) return;
     setShowAdModal(true);
   };
 
@@ -72,10 +80,16 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
           icon: '⚡',
           duration: 3000
         });
-        setRemainingSends(prev => prev - 1);
+        
+        // Refresh daily limits from backend
+        await getDailyLimits();
+        
+        // Sync user data to update points
+        await syncUserFromBackend();
+        
         if (onPokeSuccess) onPokeSuccess(50);
         
-        // Refresh the page to update user list after successful poke
+        // Refresh the users list after successful poke
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -85,6 +99,9 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
       const errorMsg = error.response?.data?.message || 'Failed to send poke';
       toast.error(errorMsg, { duration: 4000 });
       if (onPokeError) onPokeError(error);
+      
+      // Refresh limits on error too (in case of limit error)
+      await getDailyLimits();
     } finally {
       setIsPoking(false);
     }
@@ -96,7 +113,7 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
     toast.info('You must watch an ad to poke and earn points');
   };
 
-  const isButtonDisabled = isPoking || remainingSends <= 0;
+  const isButtonDisabled = isPoking || dailyLimits.remainingSends <= 0;
 
   return (
     <>
@@ -112,10 +129,10 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
           </>
         ) : (
           <>
-            {remainingSends <= 0 ? <Lock className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+            {dailyLimits.remainingSends <= 0 ? <Lock className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
             <span>Poke</span>
-            {remainingSends > 0 && remainingSends <= 2 && (
-              <span className="text-xs opacity-80">({remainingSends})</span>
+            {dailyLimits.remainingSends > 0 && (
+              <span className="text-xs opacity-80">({dailyLimits.remainingSends})</span>
             )}
           </>
         )}
@@ -145,7 +162,7 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
               
               <div className="flex items-center justify-center space-x-2 text-sm text-gray-500 mb-4">
                 <AlertCircle className="w-4 h-4" />
-                <span>Daily limit: 2 pokes • Remaining: {remainingSends}</span>
+                <span>Daily limit: 2 pokes • Remaining: {dailyLimits.remainingSends}</span>
               </div>
               
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
