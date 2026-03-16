@@ -17,12 +17,17 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
   const AD_URL = import.meta.env.VITE_AD_URL || 'https://otieu.com/4/10381267';
 
   useEffect(() => {
+    console.log('LoginTaskModal isOpen:', isOpen);
+  }, [isOpen]);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isWatchingAd && timeRemaining > 0) {
       timer = setTimeout(() => {
         setTimeRemaining(prev => prev - 1);
       }, 1000);
     } else if (isWatchingAd && timeRemaining === 0) {
+      console.log('Ad completed');
       setIsWatchingAd(false);
       setAdCompleted(true);
       toast.success('Task completed! You can now access your dashboard.', { 
@@ -37,6 +42,7 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
     // Check if ad window is closed
     const checkClosed = setInterval(() => {
       if (adWindow && adWindow.closed) {
+        console.log('Ad window closed');
         clearInterval(checkClosed);
         if (!adCompleted) {
           setIsWatchingAd(false);
@@ -52,9 +58,15 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
     return () => clearInterval(checkClosed);
   }, [adWindow, adCompleted]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('LoginTaskModal not open, returning null');
+    return null;
+  }
 
+  console.log('Rendering LoginTaskModal');
+  
   const openAdWindow = () => {
+    console.log('Opening ad window');
     const window = window.open(AD_URL, '_blank', 'width=800,height=600');
     
     if (!window) {
@@ -68,10 +80,12 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
   };
 
   const handleComplete = () => {
+    console.log('Continue button clicked');
     onComplete();
   };
 
   const handleSkip = () => {
+    console.log('Skip button clicked');
     if (onClose) {
       onClose();
     }
