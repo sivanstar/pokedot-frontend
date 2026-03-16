@@ -8,7 +8,7 @@ import {
   Banknote, AlertCircle, Wallet,
   Award, Medal, Target, Clock,
   Flame, Copy, RefreshCw, MessageCircle,
-  Send, Twitter, Instagram, Facebook
+  Send
 } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import { useWallet } from '../../context/WalletContext';
@@ -66,16 +66,13 @@ export const ProfilePage: React.FC = () => {
     confirmPassword: '',
   });
 
-  // Social Links
+  // Social Links - Only requested ones
   const socialLinks = {
-    whatsappGroup: 'https://chat.whatsapp.com/your-group-link',
-    whatsappChannel: 'https://whatsapp.com/channel/your-channel-link',
-    telegram: 'https://t.me/pokedot_official',
-    tiktok: 'https://tiktok.com/@pokedot',
-    instagram: 'https://instagram.com/pokedot',
-    twitter: 'https://twitter.com/pokedot',
-    facebook: 'https://facebook.com/pokedot',
-    email: 'support@pokedot.com'
+    whatsappGroup: 'https://chat.whatsapp.com/HBChGEhaSufKC40dFmvxMM?mode=gi_t',
+    whatsappChannel: 'https://whatsapp.com/channel/0029VbCHSH0GE56hpbLmRB2k',
+    tiktok: 'https://vm.tiktok.com/ZS9R8m755tXRg-RAGXv/',
+    telegram: 'https://t.me/Aurorixnetwork',
+    email: 'pokedotofficial@gmail.com'
   };
 
   // Load user data from context
@@ -925,7 +922,7 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
         ) : (
-          /* Contact Tab - Full width only */
+          /* Contact Tab - Full width only with only requested links */
           <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
               <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Connect With Us</h3>
@@ -935,14 +932,14 @@ export const ProfilePage: React.FC = () => {
                   Join our communities to stay updated with the latest news, tips, and connect with other POKEDOT users!
                 </p>
 
-                {/* WhatsApp Group */}
+                {/* OFFICIAL WHATSAPP GROUP */}
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-green-600 rounded-lg">
                       <MessageCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">WhatsApp Group</p>
+                      <p className="font-medium text-gray-800">OFFICIAL WHATSAPP GROUP</p>
                       <p className="text-xs text-gray-500">Join our community group</p>
                     </div>
                   </div>
@@ -954,14 +951,14 @@ export const ProfilePage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* WhatsApp Channel */}
+                {/* OFFICIAL WHATSAPP CHANNEL */}
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-green-600 rounded-lg">
                       <Send className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">WhatsApp Channel</p>
+                      <p className="font-medium text-gray-800">OFFICIAL WHATSAPP CHANNEL</p>
                       <p className="text-xs text-gray-500">Get updates & announcements</p>
                     </div>
                   </div>
@@ -973,26 +970,7 @@ export const ProfilePage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Telegram Channel */}
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-600 rounded-lg">
-                      <Send className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">Telegram Channel</p>
-                      <p className="text-xs text-gray-500">Join our Telegram community</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.telegram, '_blank')}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Join
-                  </button>
-                </div>
-
-                {/* TikTok */}
+                {/* OFFICIAL TIKTOK PAGE */}
                 <div className="flex items-center justify-between p-3 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-black rounded-lg">
@@ -1001,7 +979,7 @@ export const ProfilePage: React.FC = () => {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-medium text-white">TikTok</p>
+                      <p className="font-medium text-white">OFFICIAL TIKTOK PAGE</p>
                       <p className="text-xs text-gray-300">@pokedot</p>
                     </div>
                   </div>
@@ -1013,71 +991,33 @@ export const ProfilePage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Instagram */}
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition-opacity">
+                {/* TELEGRAM OFFICIAL CHANNEL */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-white/20 rounded-lg">
-                      <Instagram className="w-5 h-5 text-white" />
+                    <div className="p-2 bg-blue-600 rounded-lg">
+                      <Send className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">Instagram</p>
-                      <p className="text-xs text-white/80">@pokedot</p>
+                      <p className="font-medium text-gray-800">TELEGRAM OFFICIAL CHANNEL</p>
+                      <p className="text-xs text-gray-500">Join our Telegram community</p>
                     </div>
                   </div>
                   <button
-                    onClick={() => window.open(socialLinks.instagram, '_blank')}
-                    className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                    onClick={() => window.open(socialLinks.telegram, '_blank')}
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    Follow
+                    Join
                   </button>
                 </div>
 
-                {/* Twitter/X */}
-                <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-gray-900 rounded-lg">
-                      <Twitter className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-white">Twitter/X</p>
-                      <p className="text-xs text-gray-300">@pokedot</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.twitter, '_blank')}
-                    className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    Follow
-                  </button>
-                </div>
-
-                {/* Facebook */}
-                <div className="flex items-center justify-between p-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-700 rounded-lg">
-                      <Facebook className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-white">Facebook</p>
-                      <p className="text-xs text-white/80">/pokedot</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.facebook, '_blank')}
-                    className="px-3 py-1.5 bg-white text-blue-600 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    Like
-                  </button>
-                </div>
-
-                {/* Email */}
+                {/* EMAIL ADDRESS */}
                 <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-gray-600 rounded-lg">
                       <Mail className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">Email Support</p>
+                      <p className="font-medium text-gray-800">EMAIL ADDRESS</p>
                       <p className="text-xs text-gray-500">{socialLinks.email}</p>
                     </div>
                   </div>
