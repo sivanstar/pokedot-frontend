@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { TaskModal } from '../task/TaskModal';
+import { LoginTaskModal } from '../task/LoginTaskModal';
 import { Loader } from 'lucide-react';
 
 interface ProtectedTaskRouteProps {
@@ -49,11 +49,31 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
     checkTaskStatus();
   }, [location.pathname]);
 
-  const handleTaskComplete = () => {
-    setShowTaskModal(false);
-    setNeedsTask(false);
-    // Refresh the page to update any user data
-    window.location.reload();
+  const handleTaskComplete = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/task/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ adTaskId: `login_task_${Date.now()}` })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowTaskModal(false);
+        setNeedsTask(false);
+        // Refresh the page to update any user data
+        window.location.reload();
+      } else {
+        console.error('Failed to complete task:', data.message);
+      }
+    } catch (error) {
+      console.error('Error completing task:', error);
+    }
   };
 
   const handleTaskClose = () => {
@@ -77,7 +97,7 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
   if (needsTask) {
     return (
       <>
-        <TaskModal 
+        <LoginTaskModal 
           isOpen={showTaskModal} 
           onComplete={handleTaskComplete}
           onClose={handleTaskClose}
