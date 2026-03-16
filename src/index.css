@@ -1,48 +1,18 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-
-@layer base {
-  :root {
-    --color-primary-50: #f0f9ff;
-    --color-primary-100: #e0f2fe;
-    --color-primary-200: #bae6fd;
-    --color-primary-300: #7dd3fc;
-    --color-primary-400: #38bdf8;
-    --color-primary-500: #0ea5e9;
-    --color-primary-600: #0284c7;
-    --color-primary-700: #0369a1;
-    --color-primary-800: #075985;
-    --color-primary-900: #0c4a6e;
-    
-    --color-secondary-50: #fdf4ff;
-    --color-secondary-100: #fae8ff;
-    --color-secondary-200: #f5d0fe;
-    --color-secondary-300: #f0abfc;
-    --color-secondary-400: #e879f9;
-    --color-secondary-500: #d946ef;
-    --color-secondary-600: #c026d3;
-    --color-secondary-700: #a21caf;
-    --color-secondary-800: #86198f;
-    --color-secondary-900: #701a75;
-  }
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer components {
   .btn-primary {
-    @apply bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-all duration-200 transform hover:scale-105 active:scale-95;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-all duration-200;
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300;
+    @apply bg-white rounded-xl shadow-lg p-6;
   }
 }
 
@@ -55,24 +25,4 @@
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
   }
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #0ea5e9, #d946ef);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #0284c7, #c026d3);
 }

@@ -23,6 +23,12 @@ interface User {
   updatedAt: string;
 }
 
+interface DailyLimits {
+  remainingSends: number;
+  remainingReceives: number;
+  date: string;
+}
+
 interface PokeContextType {
   user: User | null;
   points: number;
@@ -31,7 +37,7 @@ interface PokeContextType {
   streak: number;
   loginStreak: number;
   topUsers: User[];
-  dailyLimits: { remainingSends: number; remainingReceives: number; date: string };
+  dailyLimits: DailyLimits;
   refreshData: () => Promise<void>;
   updateUserPoints: (points: number) => void;
   incrementPokesSent: () => void;
@@ -58,13 +64,12 @@ interface PokeProviderProps {
 
 export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    // Load from localStorage on initial mount
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
   
   const [topUsers, setTopUsers] = useState<User[]>([]);
-  const [dailyLimits, setDailyLimits] = useState({
+  const [dailyLimits, setDailyLimits] = useState<DailyLimits>({
     remainingSends: 2,
     remainingReceives: 2,
     date: new Date().toISOString().split('T')[0]
@@ -137,28 +142,27 @@ export const PokeProvider: React.FC<PokeProviderProps> = ({ children }) => {
     setUser(prev => prev ? { ...prev, ...updates } : null);
   }, []);
 
-const sendPoke = useCallback(async (userId: string, adTaskId: string = 'demo-ad-task-id') => {
-  try {
-    const response = await pokeApi.sendPoke(userId, adTaskId);
-    if (response.success) {
-      await syncUserFromBackend();
-      
-      // Update daily limits from response if available
-      if (response.remainingSends !== undefined) {
-        setDailyLimits(prev => ({
-          ...prev,
-          remainingSends: response.remainingSends
-        }));
-      } else {
-        await getDailyLimits();
+  const sendPoke = useCallback(async (userId: string, adTaskId: string = 'demo-ad-task-id') => {
+    try {
+      const response = await pokeApi.sendPoke(userId, adTaskId);
+      if (response.success) {
+        await syncUserFromBackend();
+        
+        if (response.remainingSends !== undefined) {
+          setDailyLimits(prev => ({
+            ...prev,
+            remainingSends: response.remainingSends
+          }));
+        } else {
+          await getDailyLimits();
+        }
       }
+      return response;
+    } catch (error) {
+      console.error('Error sending poke:', error);
+      throw error;
     }
-    return response;
-  } catch (error) {
-    console.error('Error sending poke:', error);
-    throw error;
-  }
-}, [syncUserFromBackend, getDailyLimits]);
+  }, [syncUserFromBackend]);
 
   const getAvailableUsers = useCallback(async (search?: string) => {
     try {
