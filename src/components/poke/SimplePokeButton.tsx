@@ -113,9 +113,9 @@ export const SimplePokeButton: React.FC<SimplePokeButtonProps> = ({
         ) : (
           <>
             {remainingSends <= 0 ? <Lock className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
-            <span>{remainingSends <= 0 ? 'Daily Limit Reached' : 'Poke for 50 points!'}</span>
-            {remainingSends > 0 && (
-              <span className="text-xs opacity-80">({remainingSends} left)</span>
+            <span>Poke</span>
+            {remainingSends > 0 && remainingSends <= 2 && (
+              <span className="text-xs opacity-80">({remainingSends})</span>
             )}
           </>
         )}
