@@ -66,7 +66,7 @@ export const ProfilePage: React.FC = () => {
     confirmPassword: '',
   });
 
-  // Social Links - Only requested ones
+  // Social Links
   const socialLinks = {
     whatsappGroup: 'https://chat.whatsapp.com/HBChGEhaSufKC40dFmvxMM?mode=gi_t',
     whatsappChannel: 'https://whatsapp.com/channel/0029VbCHSH0GE56hpbLmRB2k',
@@ -358,11 +358,6 @@ export const ProfilePage: React.FC = () => {
     toast.success('Referral link copied!');
   };
 
-  const handleCopySocialLink = (platform: string, link: string) => {
-    navigator.clipboard.writeText(link);
-    toast.success(`${platform} link copied!`);
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     try {
@@ -541,81 +536,81 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex overflow-x-auto pb-2 md:pb-0 space-x-1 mb-6 md:mb-8 bg-white rounded-xl shadow p-1 border border-gray-100 hide-scrollbar">
+        {/* Tabs - Mobile: 3 rows (3 top, 2 bottom) */}
+        <div className="grid grid-cols-3 gap-1 mb-6 md:mb-8">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+            className={`py-3 px-2 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'profile'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
             }`}
           >
-            <div className="flex items-center justify-center space-x-1 md:space-x-2">
-              <User className="w-4 h-4" />
+            <div className="flex flex-col items-center space-y-1">
+              <User className="w-5 h-5" />
               <span>Profile</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+            className={`py-3 px-2 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'stats'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
             }`}
           >
-            <div className="flex items-center justify-center space-x-1 md:space-x-2">
-              <Award className="w-4 h-4" />
+            <div className="flex flex-col items-center space-y-1">
+              <Award className="w-5 h-5" />
               <span>Stats</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('account')}
-            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+            className={`py-3 px-2 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'account'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
             }`}
           >
-            <div className="flex items-center justify-center space-x-1 md:space-x-2">
-              <Banknote className="w-4 h-4" />
+            <div className="flex flex-col items-center space-y-1">
+              <Banknote className="w-5 h-5" />
               <span>Bank</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('security')}
-            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+            className={`py-3 px-2 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'security'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
             }`}
           >
-            <div className="flex items-center justify-center space-x-1 md:space-x-2">
-              <Shield className="w-4 h-4" />
+            <div className="flex flex-col items-center space-y-1">
+              <Shield className="w-5 h-5" />
               <span>Security</span>
             </div>
           </button>
           <button
             onClick={() => setActiveTab('contact')}
-            className={`flex-1 py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all whitespace-nowrap text-sm md:text-base ${
+            className={`py-3 px-2 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'contact'
                 ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
+                : 'bg-white text-gray-700 hover:bg-gray-100 shadow'
             }`}
           >
-            <div className="flex items-center justify-center space-x-1 md:space-x-2">
-              <MessageCircle className="w-4 h-4" />
+            <div className="flex flex-col items-center space-y-1">
+              <MessageCircle className="w-5 h-5" />
               <span>Contact</span>
             </div>
           </button>
         </div>
 
-        {/* Tab Content - Different layouts per tab */}
-        {activeTab === 'profile' ? (
-          /* Profile Tab - Full width layout with referral card in right column */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-            {/* Left Column - Profile Content */}
-            <div className="lg:col-span-2 space-y-6">
+        {/* Tab Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Left Column - Tab Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Profile Tab */}
+            {activeTab === 'profile' && (
               <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
                 <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">About Me</h3>
                 
@@ -660,9 +655,330 @@ export const ProfilePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Right Column - Referral Card and Quick Stats (Only on Profile Tab) */}
+            {/* Stats Tab */}
+            {activeTab === 'stats' && (
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Performance Stats</h3>
+                
+                <div className="space-y-4 md:space-y-6">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-xs md:text-sm text-gray-600">Global Rank</span>
+                      <span className="font-bold text-primary-600 text-sm md:text-base">#{position?.position || user?.rank || 999}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
+                      <div 
+                        className="bg-gradient-to-r from-primary-500 to-secondary-500 h-1.5 md:h-2 rounded-full"
+                        style={{ width: `${position?.percentage || 0}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Top {position?.percentage || 0}%
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
+                      <p className="text-xs text-blue-600 mb-1">Login Streak</p>
+                      <div className="flex items-center">
+                        <Flame className="w-4 h-4 text-orange-500 mr-1 md:mr-2" />
+                        <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.loginStreak || 0}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50 p-3 md:p-4 rounded-lg">
+                      <p className="text-xs text-green-600 mb-1">Poke Streak</p>
+                      <div className="flex items-center">
+                        <Zap className="w-4 h-4 text-yellow-500 mr-1 md:mr-2" />
+                        <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.streak || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t">
+                    <div>
+                      <p className="text-xs text-gray-600">Pokes Sent</p>
+                      <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesSent || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Pokes Received</p>
+                      <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesReceived || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Account Tab */}
+            {activeTab === 'account' && (
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-800">Bank Details</h3>
+                  {!isEditingAccount && (
+                    <button
+                      onClick={() => setIsEditingAccount(true)}
+                      className="text-primary-600 hover:text-primary-500 text-sm md:text-base font-medium"
+                    >
+                      {hasAccountDetails ? 'Edit' : 'Add'}
+                    </button>
+                  )}
+                </div>
+
+                {hasAccountDetails && !isEditingAccount ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Bank Name</p>
+                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.bankName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Account Number</p>
+                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Account Holder</p>
+                        <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountName}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-yellow-700">
+                          Min withdrawal: 2,000 points
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 md:space-y-4">
+                    <div>
+                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Bank Name</label>
+                      <input
+                        type="text"
+                        value={accountForm.bankName}
+                        onChange={(e) => setAccountForm({...accountForm, bankName: e.target.value})}
+                        className="input-field text-sm"
+                        placeholder="e.g., GTBank"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Number</label>
+                      <input
+                        type="text"
+                        value={accountForm.accountNumber}
+                        onChange={(e) => setAccountForm({...accountForm, accountNumber: e.target.value})}
+                        className="input-field text-sm"
+                        placeholder="0123456789"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Holder</label>
+                      <input
+                        type="text"
+                        value={accountForm.accountName}
+                        onChange={(e) => setAccountForm({...accountForm, accountName: e.target.value})}
+                        className="input-field text-sm"
+                        placeholder="John Doe"
+                      />
+                    </div>
+
+                    {isEditingAccount && (
+                      <div className="flex space-x-2 pt-3">
+                        <button
+                          onClick={handleAccountCancel}
+                          className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 text-sm"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleAccountSave}
+                          className="flex-1 btn-primary py-2 text-sm"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Security Tab */}
+            {activeTab === 'security' && (
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Change Password</h3>
+                
+                <div className="space-y-3 md:space-y-4">
+                  <div>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Current Password</label>
+                    <input
+                      type="password"
+                      value={securityForm.currentPassword}
+                      onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
+                      className="input-field text-sm"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">New Password</label>
+                    <input
+                      type="password"
+                      value={securityForm.newPassword}
+                      onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
+                      className="input-field text-sm"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Confirm</label>
+                    <input
+                      type="password"
+                      value={securityForm.confirmPassword}
+                      onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
+                      className="input-field text-sm"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (securityForm.newPassword !== securityForm.confirmPassword) {
+                        toast.error('Passwords do not match');
+                        return;
+                      }
+                      toast.success('Password updated');
+                      setSecurityForm({
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                      });
+                    }}
+                    className="btn-primary w-full py-2 text-sm"
+                  >
+                    Update
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Contact Tab */}
+            {activeTab === 'contact' && (
+              <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Connect With Us</h3>
+                
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Join our communities to stay updated with the latest news, tips, and connect with other POKEDOT users!
+                  </p>
+
+                  {/* OFFICIAL WHATSAPP GROUP */}
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-green-600 rounded-lg">
+                        <MessageCircle className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">OFFICIAL WHATSAPP GROUP</p>
+                        <p className="text-xs text-gray-500">Join our community group</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => window.open(socialLinks.whatsappGroup, '_blank')}
+                      className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Join
+                    </button>
+                  </div>
+
+                  {/* OFFICIAL WHATSAPP CHANNEL */}
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-green-600 rounded-lg">
+                        <Send className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">OFFICIAL WHATSAPP CHANNEL</p>
+                        <p className="text-xs text-gray-500">Get updates & announcements</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => window.open(socialLinks.whatsappChannel, '_blank')}
+                      className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Follow
+                    </button>
+                  </div>
+
+                  {/* OFFICIAL TIKTOK PAGE */}
+                  <div className="flex items-center justify-between p-3 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-black rounded-lg">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.96 2.89 2.89 0 0 1 2.17-4.86 2.88 2.88 0 0 1 1.11.22v-3.6a6.34 6.34 0 0 0-1.12-.1 6.35 6.35 0 0 0 0 12.7 6.35 6.35 0 0 0 6.36-6.36v-7.1a8.17 8.17 0 0 0 4.77 1.48v-3.5a4.83 4.83 0 0 1-2.77-.81z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">OFFICIAL TIKTOK PAGE</p>
+                        <p className="text-xs text-gray-300">@pokedot</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => window.open(socialLinks.tiktok, '_blank')}
+                      className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      Follow
+                    </button>
+                  </div>
+
+                  {/* TELEGRAM OFFICIAL CHANNEL */}
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-blue-600 rounded-lg">
+                        <Send className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">TELEGRAM OFFICIAL CHANNEL</p>
+                        <p className="text-xs text-gray-500">Join our Telegram community</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => window.open(socialLinks.telegram, '_blank')}
+                      className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Join
+                    </button>
+                  </div>
+
+                  {/* EMAIL ADDRESS */}
+                  <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gray-600 rounded-lg">
+                        <Mail className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">EMAIL ADDRESS</p>
+                        <p className="text-xs text-gray-500">{socialLinks.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(socialLinks.email);
+                        toast.success('Email copied!');
+                      }}
+                      className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Referral Card (Only on Profile Tab) */}
+          {activeTab === 'profile' && (
             <div className="space-y-6">
               {/* Referral Card */}
               <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 md:p-6 text-white shadow-lg">
@@ -714,327 +1030,8 @@ export const ProfilePage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        ) : activeTab === 'stats' ? (
-          /* Stats Tab - Full width only */
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Performance Stats</h3>
-              
-              <div className="space-y-4 md:space-y-6">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-xs md:text-sm text-gray-600">Global Rank</span>
-                    <span className="font-bold text-primary-600 text-sm md:text-base">#{position?.position || user?.rank || 999}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
-                    <div 
-                      className="bg-gradient-to-r from-primary-500 to-secondary-500 h-1.5 md:h-2 rounded-full"
-                      style={{ width: `${position?.percentage || 0}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Top {position?.percentage || 0}%
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
-                  <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
-                    <p className="text-xs text-blue-600 mb-1">Login Streak</p>
-                    <div className="flex items-center">
-                      <Flame className="w-4 h-4 text-orange-500 mr-1 md:mr-2" />
-                      <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.loginStreak || 0}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-green-50 p-3 md:p-4 rounded-lg">
-                    <p className="text-xs text-green-600 mb-1">Poke Streak</p>
-                    <div className="flex items-center">
-                      <Zap className="w-4 h-4 text-yellow-500 mr-1 md:mr-2" />
-                      <span className="text-lg md:text-2xl font-bold text-gray-800">{user?.streak || 0}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4 border-t">
-                  <div>
-                    <p className="text-xs text-gray-600">Pokes Sent</p>
-                    <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesSent || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Pokes Received</p>
-                    <p className="text-lg md:text-2xl font-bold text-gray-800">{user?.pokesReceived || 0}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : activeTab === 'account' ? (
-          /* Account Tab - Full width only */
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <h3 className="text-lg md:text-xl font-bold text-gray-800">Bank Details</h3>
-                {!isEditingAccount && (
-                  <button
-                    onClick={() => setIsEditingAccount(true)}
-                    className="text-primary-600 hover:text-primary-500 text-sm md:text-base font-medium"
-                  >
-                    {hasAccountDetails ? 'Edit' : 'Add'}
-                  </button>
-                )}
-              </div>
-
-              {hasAccountDetails && !isEditingAccount ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Bank Name</p>
-                      <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.bankName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Account Number</p>
-                      <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Account Holder</p>
-                      <p className="font-medium text-gray-800 text-sm md:text-base">{accountForm.accountName}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-yellow-700">
-                        Min withdrawal: 2,000 points
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3 md:space-y-4">
-                  <div>
-                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Bank Name</label>
-                    <input
-                      type="text"
-                      value={accountForm.bankName}
-                      onChange={(e) => setAccountForm({...accountForm, bankName: e.target.value})}
-                      className="input-field text-sm"
-                      placeholder="e.g., GTBank"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Number</label>
-                    <input
-                      type="text"
-                      value={accountForm.accountNumber}
-                      onChange={(e) => setAccountForm({...accountForm, accountNumber: e.target.value})}
-                      className="input-field text-sm"
-                      placeholder="0123456789"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs md:text-sm text-gray-700 mb-1">Account Holder</label>
-                    <input
-                      type="text"
-                      value={accountForm.accountName}
-                      onChange={(e) => setAccountForm({...accountForm, accountName: e.target.value})}
-                      className="input-field text-sm"
-                      placeholder="John Doe"
-                    />
-                  </div>
-
-                  {isEditingAccount && (
-                    <div className="flex space-x-2 pt-3">
-                      <button
-                        onClick={handleAccountCancel}
-                        className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 text-sm"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleAccountSave}
-                        className="flex-1 btn-primary py-2 text-sm"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : activeTab === 'security' ? (
-          /* Security Tab - Full width only */
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Change Password</h3>
-              
-              <div className="space-y-3 md:space-y-4">
-                <div>
-                  <label className="block text-xs md:text-sm text-gray-700 mb-1">Current Password</label>
-                  <input
-                    type="password"
-                    value={securityForm.currentPassword}
-                    onChange={(e) => setSecurityForm({...securityForm, currentPassword: e.target.value})}
-                    className="input-field text-sm"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs md:text-sm text-gray-700 mb-1">New Password</label>
-                  <input
-                    type="password"
-                    value={securityForm.newPassword}
-                    onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
-                    className="input-field text-sm"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs md:text-sm text-gray-700 mb-1">Confirm</label>
-                  <input
-                    type="password"
-                    value={securityForm.confirmPassword}
-                    onChange={(e) => setSecurityForm({...securityForm, confirmPassword: e.target.value})}
-                    className="input-field text-sm"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <button
-                  onClick={() => {
-                    if (securityForm.newPassword !== securityForm.confirmPassword) {
-                      toast.error('Passwords do not match');
-                      return;
-                    }
-                    toast.success('Password updated');
-                    setSecurityForm({
-                      currentPassword: '',
-                      newPassword: '',
-                      confirmPassword: ''
-                    });
-                  }}
-                  className="btn-primary w-full py-2 text-sm"
-                >
-                  Update
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Contact Tab - Full width only with only requested links */
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 border border-gray-100">
-              <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Connect With Us</h3>
-              
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  Join our communities to stay updated with the latest news, tips, and connect with other POKEDOT users!
-                </p>
-
-                {/* OFFICIAL WHATSAPP GROUP */}
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-600 rounded-lg">
-                      <MessageCircle className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">OFFICIAL WHATSAPP GROUP</p>
-                      <p className="text-xs text-gray-500">Join our community group</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.whatsappGroup, '_blank')}
-                    className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Join
-                  </button>
-                </div>
-
-                {/* OFFICIAL WHATSAPP CHANNEL */}
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-600 rounded-lg">
-                      <Send className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">OFFICIAL WHATSAPP CHANNEL</p>
-                      <p className="text-xs text-gray-500">Get updates & announcements</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.whatsappChannel, '_blank')}
-                    className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Follow
-                  </button>
-                </div>
-
-                {/* OFFICIAL TIKTOK PAGE */}
-                <div className="flex items-center justify-between p-3 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-black rounded-lg">
-                      <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.96 2.89 2.89 0 0 1 2.17-4.86 2.88 2.88 0 0 1 1.11.22v-3.6a6.34 6.34 0 0 0-1.12-.1 6.35 6.35 0 0 0 0 12.7 6.35 6.35 0 0 0 6.36-6.36v-7.1a8.17 8.17 0 0 0 4.77 1.48v-3.5a4.83 4.83 0 0 1-2.77-.81z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium text-white">OFFICIAL TIKTOK PAGE</p>
-                      <p className="text-xs text-gray-300">@pokedot</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.tiktok, '_blank')}
-                    className="px-3 py-1.5 bg-white text-gray-900 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    Follow
-                  </button>
-                </div>
-
-                {/* TELEGRAM OFFICIAL CHANNEL */}
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-600 rounded-lg">
-                      <Send className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">TELEGRAM OFFICIAL CHANNEL</p>
-                      <p className="text-xs text-gray-500">Join our Telegram community</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => window.open(socialLinks.telegram, '_blank')}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Join
-                  </button>
-                </div>
-
-                {/* EMAIL ADDRESS */}
-                <div className="flex items-center justify-between p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-gray-600 rounded-lg">
-                      <Mail className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">EMAIL ADDRESS</p>
-                      <p className="text-xs text-gray-500">{socialLinks.email}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(socialLinks.email);
-                      toast.success('Email copied!');
-                    }}
-                    className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Hide scrollbar styles */}
