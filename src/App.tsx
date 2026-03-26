@@ -6,6 +6,7 @@ import { NotificationsProvider } from './context/NotificationsContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
 import { Navbar } from './components/layout/Navbar';
+import { BoostPage } from './pages/BoostPage';
 
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
@@ -98,6 +99,8 @@ function App() {
                     </LayoutWrapper>
                   </ProtectedRoute>
                 } />
+
+                <Route path="/boost" element={<BoostPage />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={
