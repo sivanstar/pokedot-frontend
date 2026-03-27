@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, User, LogOut, Settings, Shield, Menu, X, Trophy, Wallet, Rocket } from 'lucide-react';
+import { Zap, User, LogOut, Settings, Shield, Menu, X, Trophy, Wallet } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import { authApi } from '../../api/auth';
 import toast from 'react-hot-toast';
@@ -74,17 +74,16 @@ export const Navbar: React.FC = () => {
                   Leaderboard
                 </Link>
                 <Link
+                   to="/social-boost"
+                  className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg font-medium transition-colors"
+          >
+                   Social Boost
+                </Link>
+                <Link
                   to="/wallet"
                   className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg font-medium transition-colors"
                 >
                   Wallet
-                </Link>
-                <Link
-                  to="/boost"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg font-medium transition-colors"
-                >
-                  <Rocket className="w-4 h-4" />
-                  <span>Boost</span>
                 </Link>
                 
                 {/* Admin Link - Only visible to admin users */}
@@ -208,20 +207,20 @@ export const Navbar: React.FC = () => {
                   <span className="font-medium">Leaderboard</span>
                 </Link>
                 <Link
+                  to="/social-boost"
+                  className="flex items-center space-x-3 p-3 text-gray-700 hover:bg-primary-50 rounded-lg transition-colors"
+                   onClick={closeMobileMenu}
+                >
+                 <TrendingUp className="w-5 h-5 text-primary-500" />
+                 <span className="font-medium">Social Boost</span>
+                </Link>
+                <Link
                   to="/wallet"
                   className="flex items-center space-x-3 p-3 text-gray-700 hover:bg-primary-50 rounded-lg transition-colors"
                   onClick={closeMobileMenu}
                 >
                   <Wallet className="w-5 h-5 text-green-500" />
                   <span className="font-medium">Wallet</span>
-                </Link>
-                <Link
-                  to="/boost"
-                  className="flex items-center space-x-3 p-3 text-gray-700 hover:bg-primary-50 rounded-lg transition-colors"
-                  onClick={closeMobileMenu}
-                >
-                  <Rocket className="w-5 h-5 text-purple-500" />
-                  <span className="font-medium">Boost</span>
                 </Link>
                 <Link
                   to="/profile"

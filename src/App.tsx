@@ -6,7 +6,6 @@ import { NotificationsProvider } from './context/NotificationsContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
 import { Navbar } from './components/layout/Navbar';
-import { BoostPage } from './pages/BoostPage';
 
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
@@ -19,9 +18,11 @@ import { PokePage } from './pages/poke/PokePage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { WalletPage } from './pages/wallet/WalletPage';
 import { Leaderboard } from './pages/leaderboard/Leaderboard';
+import { SocialBoost } from './pages/social/SocialBoost';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminSocial } from './pages/admin/AdminSocial';
 
 // Home Page
 import { HomePage } from './pages/home/HomePage';
@@ -100,7 +101,15 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                <Route path="/boost" element={<BoostPage />} />
+                <Route path="/social-boost" element={
+  <ProtectedRoute>
+    <ProtectedTaskRoute>
+      <LayoutWrapper>
+        <SocialBoost />
+      </LayoutWrapper>
+    </ProtectedTaskRoute>
+  </ProtectedRoute>
+} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={
