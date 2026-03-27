@@ -59,7 +59,7 @@ export const AdminDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pokeSearchTerm, setPokeSearchTerm] = useState('');
   const [withdrawalFilter, setWithdrawalFilter] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pokes' | 'transactions' | 'activities'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pokes' | 'transactions' | 'social'>('overview');
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [userUpdates, setUserUpdates] = useState<Record<string, Partial<AdminUser>>>({});
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -549,7 +549,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('withdrawals')}
               className={`px-6 py-3 font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'withdrawals'
-                  ? 'border-primary-500 text-primary-600'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -594,7 +594,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center space-x-2">
                 <Coins className="w-4 h-4" />
-                <span></span>
+                <span>Transactions</span>
               </div>
             </button>
           </div>
@@ -769,7 +769,7 @@ export const AdminDashboard: React.FC = () => {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                           </th>
-                        </tr>
+                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {users.map((user) => (
@@ -1201,6 +1201,11 @@ export const AdminDashboard: React.FC = () => {
               )}
             </div>
           </div>
+        )}
+
+        {/* Social Boost Tab */}
+        {activeTab === 'social' && (
+          <AdminSocial />
         )}
 
         {/* Poke History Tab */}

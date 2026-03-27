@@ -6,33 +6,70 @@ import {
   Eye, Filter, Clock, Loader, TrendingUp, Award, Settings,
   Users, Activity
 } from 'lucide-react';
-import { smmApi, SMMService, SMMOrder } from '../../api/smm';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
+interface Service {
+  _id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  icon: string;
+  category: string;
+  minPoints: number;
+  pointsCost: number;
+  quantity: number;
+  quantityUnit: string;
+  isActive: boolean;
+  apiServiceId: string;
+  apiServiceName: string;
+  orderCount: number;
+  createdAt: string;
+}
+
+interface Order {
+  _id: string;
+  user: { username: string; email: string };
+  service: { displayName: string; category: string };
+  serviceName: string;
+  username: string;
+  link: string;
+  quantity: number;
+  pointsSpent: number;
+  status: string;
+  adminNotes: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
 export const AdminSocial: React.FC = () => {
-  const [services, setServices] = useState<SMMService[]>([]);
-  const [orders, setOrders] = useState<SMMOrder[]>([]);
-  const [stats, setStats] = useState<{ total: number; active: number; totalOrders: number; totalPointsSpent: number }>({
-    total: 0, active: 0, totalOrders: 0, totalPointsSpent: 0
-  });
+  const [services, setServices] = useState<Service[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, totalOrders: 0, totalPointsSpent: 0 });
   const [loading, setLoading] = useState({ services: true, orders: true });
   const [activeTab, setActiveTab] = useState<'services' | 'orders'>('services');
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [editingService, setEditingService] = useState<SMMService | null>(null);
-  const [serviceForm, setServiceForm] = useState<Partial<SMMService>>({});
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [serviceForm, setServiceForm] = useState<Partial<Service>>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<SMMOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
 
   const loadServices = async () => {
     setLoading(prev => ({ ...prev, services: true }));
     try {
-      const response = await smmApi.adminGetServices();
-      if (response.success) {
-        setServices(response.services);
-        setStats(response.stats);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setServices(data.services);
+        setStats(data.stats);
+      } else {
+        console.error('Failed to load services:', data);
+        toast.error('Failed to load services');
       }
     } catch (error) {
       console.error('Error loading services:', error);
@@ -45,10 +82,14 @@ export const AdminSocial: React.FC = () => {
   const loadOrders = async () => {
     setLoading(prev => ({ ...prev, orders: true }));
     try {
-      const response = await smmApi.adminGetOrders();
-      if (response.success) {
-        setOrders(response.orders);
-        setStats(prev => ({ ...prev, ...response.stats }));
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/orders`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setOrders(data.orders);
+        setStats(prev => ({ ...prev, ...data.stats }));
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -70,23 +111,30 @@ export const AdminSocial: React.FC = () => {
     }
 
     try {
-      const response = await smmApi.adminCreateService({
-        ...serviceForm,
-        quantity: serviceForm.quantity || 100,
-        quantityUnit: serviceForm.quantityUnit || 'followers',
-        minPoints: serviceForm.minPoints || 5000,
-        pointsCost: serviceForm.pointsCost,
-        apiServiceId: serviceForm.apiServiceId
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...serviceForm,
+          quantity: serviceForm.quantity || 100,
+          quantityUnit: serviceForm.quantityUnit || 'followers',
+          minPoints: serviceForm.minPoints || 5000,
+          isActive: true
+        })
       });
-      
-      if (response.success) {
+      const data = await response.json();
+      if (data.success) {
         toast.success('Service created successfully');
         setShowServiceModal(false);
         setEditingService(null);
         setServiceForm({});
         loadServices();
       } else {
-        toast.error(response.message || 'Failed to create service');
+        toast.error(data.message || 'Failed to create service');
       }
     } catch (error) {
       console.error('Error creating service:', error);
@@ -98,15 +146,24 @@ export const AdminSocial: React.FC = () => {
     if (!editingService) return;
 
     try {
-      const response = await smmApi.adminUpdateService(editingService._id, serviceForm);
-      if (response.success) {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services/${editingService._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(serviceForm)
+      });
+      const data = await response.json();
+      if (data.success) {
         toast.success('Service updated successfully');
         setShowServiceModal(false);
         setEditingService(null);
         setServiceForm({});
         loadServices();
       } else {
-        toast.error(response.message || 'Failed to update service');
+        toast.error(data.message || 'Failed to update service');
       }
     } catch (error) {
       console.error('Error updating service:', error);
@@ -116,15 +173,24 @@ export const AdminSocial: React.FC = () => {
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      const response = await smmApi.adminUpdateOrder(orderId, status, adminNotes);
-      if (response.success) {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status, adminNotes })
+      });
+      const data = await response.json();
+      if (data.success) {
         toast.success(`Order ${status}`);
         setShowOrderModal(false);
         setSelectedOrder(null);
         setAdminNotes('');
         loadOrders();
       } else {
-        toast.error(response.message || 'Failed to update order');
+        toast.error(data.message || 'Failed to update order');
       }
     } catch (error) {
       console.error('Error updating order:', error);
@@ -164,305 +230,275 @@ export const AdminSocial: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl p-6 text-white mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-3">
-                <TrendingUp className="w-8 h-8" />
-                <h1 className="text-2xl font-bold">Social Media Management</h1>
-              </div>
-              <p className="text-white/80 mt-2">Manage boost services and orders</p>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <button
-                onClick={() => {
-                  setEditingService(null);
-                  setServiceForm({});
-                  setShowServiceModal(true);
-                }}
-                className="bg-white text-primary-600 px-6 py-2 rounded-lg font-medium flex items-center space-x-2 hover:bg-gray-100"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Service</span>
-              </button>
-            </div>
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <Award className="w-8 h-8 text-blue-500" />
+            <span className="text-2xl font-bold text-gray-800">{stats.total}</span>
           </div>
+          <p className="text-gray-600 text-sm">Total Services</p>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Award className="w-8 h-8 text-blue-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats.total}</span>
-            </div>
-            <p className="text-gray-600 text-sm">Total Services</p>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <CheckCircle className="w-8 h-8 text-green-500" />
+            <span className="text-2xl font-bold text-gray-800">{stats.active}</span>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <CheckCircle className="w-8 h-8 text-green-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats.active}</span>
-            </div>
-            <p className="text-gray-600 text-sm">Active Services</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-8 h-8 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats.totalOrders}</span>
-            </div>
-            <p className="text-gray-600 text-sm">Total Orders</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Coins className="w-8 h-8 text-purple-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats.totalPointsSpent?.toLocaleString() || 0}</span>
-            </div>
-            <p className="text-gray-600 text-sm">Points Spent</p>
-          </div>
+          <p className="text-gray-600 text-sm">Active Services</p>
         </div>
-
-        {/* Tabs */}
-        <div className="flex space-x-1 mb-6 bg-white rounded-xl shadow p-1 max-w-md">
-          <button
-            onClick={() => setActiveTab('services')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-              activeTab === 'services'
-                ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Services
-          </button>
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-              activeTab === 'orders'
-                ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Orders
-          </button>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <Users className="w-8 h-8 text-yellow-500" />
+            <span className="text-2xl font-bold text-gray-800">{stats.totalOrders}</span>
+          </div>
+          <p className="text-gray-600 text-sm">Total Orders</p>
         </div>
-
-        {/* Services Tab */}
-        {activeTab === 'services' && (
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-
-            {/* Services Table */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              {loading.services ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading services...</p>
-                </div>
-              ) : filteredServices.length === 0 ? (
-                <div className="text-center py-12">
-                  <Award className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500">No services found</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points Cost</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Points</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredServices.map(service => (
-                        <tr key={service._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-3">
-                              <div className="p-2 bg-gray-100 rounded-lg">
-                                {getCategoryIcon(service.category)}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">{service.displayName}</p>
-                                <p className="text-xs text-gray-500">{service.name}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="capitalize px-2 py-1 rounded-full text-xs bg-gray-100">
-                              {service.category}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-1">
-                              <Coins className="w-4 h-4 text-yellow-500" />
-                              <span className="font-bold">{service.pointsCost.toLocaleString()}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {service.minPoints.toLocaleString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {service.quantity} {service.quantityUnit}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {service.orderCount}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {service.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => {
-                                  setEditingService(service);
-                                  setServiceForm(service);
-                                  setShowServiceModal(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleUpdateServiceStatus?.(service._id, service.isActive)}
-                                className={`${service.isActive ? 'text-red-600' : 'text-green-600'} hover:opacity-80`}
-                              >
-                                {service.isActive ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <Coins className="w-8 h-8 text-purple-500" />
+            <span className="text-2xl font-bold text-gray-800">{stats.totalPointsSpent?.toLocaleString() || 0}</span>
           </div>
-        )}
-
-        {/* Orders Tab */}
-        {activeTab === 'orders' && (
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search by username or service..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-
-            {/* Orders Table */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              {loading.orders ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading orders...</p>
-                </div>
-              ) : filteredOrders.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500">No orders found</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredOrders.map(order => (
-                        <tr key={order._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="font-mono text-xs">{order._id.slice(-8)}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <p className="font-medium text-gray-900">{order.user?.username}</p>
-                              <p className="text-xs text-gray-500">{order.user?.email}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              {getCategoryIcon(order.service?.category)}
-                              <span>{order.serviceName}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="text-sm">@{order.username}</p>
-                              <p className="text-xs text-gray-500 truncate max-w-[200px]">{order.link}</p>
-                              <p className="text-xs text-gray-500">x{order.quantity}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-1">
-                              <Coins className="w-4 h-4 text-yellow-500" />
-                              <span>{order.pointsSpent.toLocaleString()}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setShowOrderModal(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          <p className="text-gray-600 text-sm">Points Spent</p>
+        </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex space-x-1 mb-6 bg-white rounded-xl shadow p-1 max-w-md">
+        <button
+          onClick={() => setActiveTab('services')}
+          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+            activeTab === 'services'
+              ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          Services
+        </button>
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+            activeTab === 'orders'
+              ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-md'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          Orders
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-xl shadow-lg p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+      </div>
+
+      {/* Services Tab */}
+      {activeTab === 'services' && (
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h3 className="font-bold text-gray-800">Available Services</h3>
+            <button
+              onClick={() => {
+                setEditingService(null);
+                setServiceForm({});
+                setShowServiceModal(true);
+              }}
+              className="btn-primary px-4 py-2 text-sm flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Service</span>
+            </button>
+          </div>
+          
+          {loading.services ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading services...</p>
+            </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="text-center py-12">
+              <Award className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500">No services found. Click "Add Service" to create one.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points Cost</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Points</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredServices.map(service => (
+                    <tr key={service._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-gray-100 rounded-lg">
+                            {getCategoryIcon(service.category)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{service.displayName}</p>
+                            <p className="text-xs text-gray-500">{service.name}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="capitalize px-2 py-1 rounded-full text-xs bg-gray-100">
+                          {service.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
+                          <Coins className="w-4 h-4 text-yellow-500" />
+                          <span className="font-bold">{service.pointsCost.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {service.minPoints.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {service.quantity} {service.quantityUnit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {service.orderCount}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          service.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {service.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              setEditingService(service);
+                              setServiceForm(service);
+                              setShowServiceModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Orders Tab */}
+      {activeTab === 'orders' && (
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="p-4 border-b">
+            <h3 className="font-bold text-gray-800">Order History</h3>
+          </div>
+          
+          {loading.orders ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading orders...</p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500">No orders found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredOrders.map(order => (
+                    <tr key={order._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <p className="font-medium text-gray-900">{order.user?.username}</p>
+                          <p className="text-xs text-gray-500">{order.user?.email}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          {getCategoryIcon(order.service?.category)}
+                          <span>{order.serviceName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-sm">@{order.username}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[200px]">{order.link}</p>
+                          <p className="text-xs text-gray-500">x{order.quantity}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
+                          <Coins className="w-4 h-4 text-yellow-500" />
+                          <span>{order.pointsSpent.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {format(new Date(order.createdAt), 'MMM dd')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {format(new Date(order.createdAt), 'hh:mm a')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setShowOrderModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Service Modal */}
       {showServiceModal && (
@@ -541,7 +577,7 @@ export const AdminSocial: React.FC = () => {
                       className="input-field"
                       placeholder="8000"
                     />
-                    <p className="text-xs text-gray-500 mt-1">This is the cost in points (recommended: 8,000+ for $1 service)</p>
+                    <p className="text-xs text-gray-500 mt-1">Cost in points (e.g., 8000 = $1 equivalent)</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Points Required</label>
@@ -587,32 +623,6 @@ export const AdminSocial: React.FC = () => {
                   />
                 </div>
 
-                <div className="border-t pt-4">
-                  <h4 className="font-medium text-gray-800 mb-3">API Configuration (SMM Panel)</h4>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                      <input
-                        type="text"
-                        value={serviceForm.apiKey || ''}
-                        onChange={(e) => setServiceForm({ ...serviceForm, apiKey: e.target.value })}
-                        className="input-field"
-                        placeholder="API key from SMM panel"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">API URL</label>
-                      <input
-                        type="text"
-                        value={serviceForm.apiUrl || ''}
-                        onChange={(e) => setServiceForm({ ...serviceForm, apiUrl: e.target.value })}
-                        className="input-field"
-                        placeholder="https://api.smm-panel.com/v1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex space-x-3 pt-4">
                   <button
                     onClick={() => setShowServiceModal(false)}
@@ -646,11 +656,11 @@ export const AdminSocial: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Order Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Order ID</p>
-                    <p className="font-mono text-sm">{selectedOrder._id}</p>
+                    <p className="text-sm text-gray-500">User</p>
+                    <p className="font-medium">{selectedOrder.user?.username}</p>
+                    <p className="text-sm text-gray-500">{selectedOrder.user?.email}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Created</p>
@@ -658,22 +668,6 @@ export const AdminSocial: React.FC = () => {
                   </div>
                 </div>
 
-                {/* User Info */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-800 mb-2">User Information</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-xs text-gray-500">Username</p>
-                      <p className="font-medium">{selectedOrder.user?.username}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Email</p>
-                      <p className="font-medium">{selectedOrder.user?.email}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Service Info */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-800 mb-2">Service Details</h4>
                   <div className="space-y-2">
@@ -702,7 +696,6 @@ export const AdminSocial: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Status Update */}
                 <div>
                   <h4 className="font-medium text-gray-800 mb-2">Update Status</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
