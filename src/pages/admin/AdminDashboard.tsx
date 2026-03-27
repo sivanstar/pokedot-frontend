@@ -16,6 +16,7 @@ import { adminApi, AdminStats, AdminUser, Withdrawal, WalletUpdateData, PokeTran
 import { ConfirmationDialog } from '../../components/admin/ConfirmationDialog';
 import { PokeHistory } from '../../components/admin/PokeHistory';
 import { AdminTransactionHistory } from '../../components/admin/AdminTransactionHistory';
+import { AdminSocial } from './AdminSocial';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -58,7 +59,7 @@ export const AdminDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pokeSearchTerm, setPokeSearchTerm] = useState('');
   const [withdrawalFilter, setWithdrawalFilter] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pokes' | 'transactions' | 'activities'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'withdrawals' | 'pokes' | 'transactions' | 'social'>('overview');
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [userUpdates, setUserUpdates] = useState<Record<string, Partial<AdminUser>>>({});
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -548,7 +549,7 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab('withdrawals')}
               className={`px-6 py-3 font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'withdrawals'
-                  ? 'border-primary-500 text-primary-600'
+                  ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -580,7 +581,20 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center space-x-2">
                 <Coins className="w-4 h-4" />
-                <span></span>
+                <span>Transactions</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('social')}
+              className={`px-6 py-3 font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'social'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="w-4 h-4" />
+                <span>Social Boost</span>
               </div>
             </button>
           </div>
@@ -1197,6 +1211,11 @@ export const AdminDashboard: React.FC = () => {
         {/* Transactions Tab */}
         {activeTab === 'transactions' && (
           <AdminTransactionHistory onRefresh={loadStats} />
+        )}
+
+        {/* Social Boost Tab */}
+        {activeTab === 'social' && (
+          <AdminSocial />
         )}
       </div>
 

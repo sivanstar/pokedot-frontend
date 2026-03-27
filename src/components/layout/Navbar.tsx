@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, User, LogOut, Settings, Shield, Menu, X, Trophy, Wallet } from 'lucide-react';
+import { Zap, User, LogOut, Settings, Shield, Menu, X, Trophy, Wallet, TrendingUp } from 'lucide-react';
 import { usePoke } from '../../context/PokeContext';
 import { authApi } from '../../api/auth';
 import toast from 'react-hot-toast';
@@ -27,7 +27,6 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  // Type assertion for user
   const typedUser = user as UserWithRole | null;
   const isAdmin = typedUser?.role === 'admin';
 
@@ -74,10 +73,10 @@ export const Navbar: React.FC = () => {
                   Leaderboard
                 </Link>
                 <Link
-                   to="/social-boost"
+                  to="/social-boost"
                   className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg font-medium transition-colors"
-          >
-                   Social Boost
+                >
+                  Social Boost
                 </Link>
                 <Link
                   to="/wallet"
@@ -209,10 +208,10 @@ export const Navbar: React.FC = () => {
                 <Link
                   to="/social-boost"
                   className="flex items-center space-x-3 p-3 text-gray-700 hover:bg-primary-50 rounded-lg transition-colors"
-                   onClick={closeMobileMenu}
+                  onClick={closeMobileMenu}
                 >
-                 <TrendingUp className="w-5 h-5 text-primary-500" />
-                 <span className="font-medium">Social Boost</span>
+                  <TrendingUp className="w-5 h-5 text-primary-500" />
+                  <span className="font-medium">Social Boost</span>
                 </Link>
                 <Link
                   to="/wallet"

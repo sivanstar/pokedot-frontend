@@ -3,72 +3,36 @@ import {
   Instagram, Facebook, Twitter, Music, Youtube, Send,
   Plus, Edit2, Trash2, Save, X, RefreshCw, Search,
   CheckCircle, XCircle, AlertCircle, DollarSign, Coins,
-  Eye, Filter, Clock, Loader, TrendingUp, Award, Settings
+  Eye, Filter, Clock, Loader, TrendingUp, Award, Settings,
+  Users, Activity
 } from 'lucide-react';
+import { smmApi, SMMService, SMMOrder } from '../../api/smm';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-interface Service {
-  _id: string;
-  name: string;
-  displayName: string;
-  description: string;
-  icon: string;
-  category: string;
-  minPoints: number;
-  pointsCost: number;
-  quantity: number;
-  quantityUnit: string;
-  isActive: boolean;
-  apiServiceId: string;
-  apiServiceName: string;
-  apiKey: string;
-  apiUrl: string;
-  orderCount: number;
-  createdAt: string;
-}
-
-interface Order {
-  _id: string;
-  user: { username: string; email: string };
-  service: { displayName: string; category: string };
-  serviceName: string;
-  username: string;
-  link: string;
-  quantity: number;
-  pointsSpent: number;
-  status: string;
-  adminNotes: string;
-  createdAt: string;
-  completedAt?: string;
-}
-
 export const AdminSocial: React.FC = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [stats, setStats] = useState<Record<string, { count: number; totalPoints: number }>>({});
+  const [services, setServices] = useState<SMMService[]>([]);
+  const [orders, setOrders] = useState<SMMOrder[]>([]);
+  const [stats, setStats] = useState<{ total: number; active: number; totalOrders: number; totalPointsSpent: number }>({
+    total: 0, active: 0, totalOrders: 0, totalPointsSpent: 0
+  });
   const [loading, setLoading] = useState({ services: true, orders: true });
   const [activeTab, setActiveTab] = useState<'services' | 'orders'>('services');
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [editingService, setEditingService] = useState<Service | null>(null);
-  const [serviceForm, setServiceForm] = useState<Partial<Service>>({});
+  const [editingService, setEditingService] = useState<SMMService | null>(null);
+  const [serviceForm, setServiceForm] = useState<Partial<SMMService>>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [orderFilter, setOrderFilter] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<SMMOrder | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
 
   const loadServices = async () => {
     setLoading(prev => ({ ...prev, services: true }));
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setServices(data.services);
-        setStats(data.stats);
+      const response = await smmApi.adminGetServices();
+      if (response.success) {
+        setServices(response.services);
+        setStats(response.stats);
       }
     } catch (error) {
       console.error('Error loading services:', error);
@@ -81,14 +45,10 @@ export const AdminSocial: React.FC = () => {
   const loadOrders = async () => {
     setLoading(prev => ({ ...prev, orders: true }));
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/orders`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setOrders(data.orders);
-        setStats(data.stats);
+      const response = await smmApi.adminGetOrders();
+      if (response.success) {
+        setOrders(response.orders);
+        setStats(prev => ({ ...prev, ...response.stats }));
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -110,29 +70,23 @@ export const AdminSocial: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...serviceForm,
-          quantity: serviceForm.quantity || 100,
-          quantityUnit: serviceForm.quantityUnit || 'followers',
-          minPoints: serviceForm.minPoints || 5000
-        })
+      const response = await smmApi.adminCreateService({
+        ...serviceForm,
+        quantity: serviceForm.quantity || 100,
+        quantityUnit: serviceForm.quantityUnit || 'followers',
+        minPoints: serviceForm.minPoints || 5000,
+        pointsCost: serviceForm.pointsCost,
+        apiServiceId: serviceForm.apiServiceId
       });
-      const data = await response.json();
-      if (data.success) {
+      
+      if (response.success) {
         toast.success('Service created successfully');
         setShowServiceModal(false);
         setEditingService(null);
         setServiceForm({});
         loadServices();
       } else {
-        toast.error(data.message || 'Failed to create service');
+        toast.error(response.message || 'Failed to create service');
       }
     } catch (error) {
       console.error('Error creating service:', error);
@@ -144,24 +98,15 @@ export const AdminSocial: React.FC = () => {
     if (!editingService) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services/${editingService._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(serviceForm)
-      });
-      const data = await response.json();
-      if (data.success) {
+      const response = await smmApi.adminUpdateService(editingService._id, serviceForm);
+      if (response.success) {
         toast.success('Service updated successfully');
         setShowServiceModal(false);
         setEditingService(null);
         setServiceForm({});
         loadServices();
       } else {
-        toast.error(data.message || 'Failed to update service');
+        toast.error(response.message || 'Failed to update service');
       }
     } catch (error) {
       console.error('Error updating service:', error);
@@ -169,48 +114,17 @@ export const AdminSocial: React.FC = () => {
     }
   };
 
-  const handleToggleServiceStatus = async (serviceId: string, isActive: boolean) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/services/${serviceId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ isActive: !isActive })
-      });
-      const data = await response.json();
-      if (data.success) {
-        toast.success(`Service ${!isActive ? 'activated' : 'deactivated'}`);
-        loadServices();
-      }
-    } catch (error) {
-      console.error('Error toggling service:', error);
-      toast.error('Failed to update service');
-    }
-  };
-
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/social/orders/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status, adminNotes })
-      });
-      const data = await response.json();
-      if (data.success) {
+      const response = await smmApi.adminUpdateOrder(orderId, status, adminNotes);
+      if (response.success) {
         toast.success(`Order ${status}`);
         setShowOrderModal(false);
         setSelectedOrder(null);
         setAdminNotes('');
         loadOrders();
       } else {
-        toast.error(data.message || 'Failed to update order');
+        toast.error(response.message || 'Failed to update order');
       }
     } catch (error) {
       console.error('Error updating order:', error);
@@ -283,28 +197,28 @@ export const AdminSocial: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <Award className="w-8 h-8 text-blue-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats?.total || 0}</span>
+              <span className="text-2xl font-bold text-gray-800">{stats.total}</span>
             </div>
             <p className="text-gray-600 text-sm">Total Services</p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <CheckCircle className="w-8 h-8 text-green-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats?.active || 0}</span>
+              <span className="text-2xl font-bold text-gray-800">{stats.active}</span>
             </div>
             <p className="text-gray-600 text-sm">Active Services</p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <Coins className="w-8 h-8 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats?.totalOrders || 0}</span>
+              <Users className="w-8 h-8 text-yellow-500" />
+              <span className="text-2xl font-bold text-gray-800">{stats.totalOrders}</span>
             </div>
             <p className="text-gray-600 text-sm">Total Orders</p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign className="w-8 h-8 text-purple-500" />
-              <span className="text-2xl font-bold text-gray-800">{stats?.totalPointsSpent || 0}</span>
+              <Coins className="w-8 h-8 text-purple-500" />
+              <span className="text-2xl font-bold text-gray-800">{stats.totalPointsSpent?.toLocaleString() || 0}</span>
             </div>
             <p className="text-gray-600 text-sm">Points Spent</p>
           </div>
@@ -371,6 +285,7 @@ export const AdminSocial: React.FC = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points Cost</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Points</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -401,7 +316,9 @@ export const AdminSocial: React.FC = () => {
                               <Coins className="w-4 h-4 text-yellow-500" />
                               <span className="font-bold">{service.pointsCost.toLocaleString()}</span>
                             </div>
-                            <div className="text-xs text-gray-500">Min: {service.minPoints.toLocaleString()}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {service.minPoints.toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {service.quantity} {service.quantityUnit}
@@ -429,7 +346,7 @@ export const AdminSocial: React.FC = () => {
                                 <Edit2 className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleToggleServiceStatus(service._id, service.isActive)}
+                                onClick={() => handleUpdateServiceStatus?.(service._id, service.isActive)}
                                 className={`${service.isActive ? 'text-red-600' : 'text-green-600'} hover:opacity-80`}
                               >
                                 {service.isActive ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -622,11 +539,12 @@ export const AdminSocial: React.FC = () => {
                       value={serviceForm.pointsCost || ''}
                       onChange={(e) => setServiceForm({ ...serviceForm, pointsCost: parseInt(e.target.value) })}
                       className="input-field"
-                      placeholder="7000"
+                      placeholder="8000"
                     />
+                    <p className="text-xs text-gray-500 mt-1">This is the cost in points (recommended: 8,000+ for $1 service)</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Points</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Points Required</label>
                     <input
                       type="number"
                       value={serviceForm.minPoints || 5000}
@@ -670,7 +588,7 @@ export const AdminSocial: React.FC = () => {
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="font-medium text-gray-800 mb-3">API Configuration</h4>
+                  <h4 className="font-medium text-gray-800 mb-3">API Configuration (SMM Panel)</h4>
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
