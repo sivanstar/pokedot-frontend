@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Eye, X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import React, { useState } from 'react';
+import { Eye, X, AlertCircle, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface LoginTaskModalProps {
@@ -11,59 +11,35 @@ interface LoginTaskModalProps {
 export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComplete, onClose }) => {
   const [isWatchingAd, setIsWatchingAd] = useState(false);
   const [adCompleted, setAdCompleted] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(5);
   const [adWindow, setAdWindow] = useState<Window | null>(null);
 
   const AD_URL = import.meta.env.VITE_AD_URL || 'https://otieu.com/4/10381267';
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isWatchingAd && timeRemaining > 0) {
-      timer = setTimeout(() => {
-        setTimeRemaining(prev => prev - 1);
-      }, 1000);
-    } else if (isWatchingAd && timeRemaining === 0) {
-      setIsWatchingAd(false);
-      setAdCompleted(true);
-      toast.success('Task completed! You can now access your dashboard.', { 
-        duration: 3000,
-        icon: '✅'
-      });
-    }
-    return () => clearTimeout(timer);
-  }, [isWatchingAd, timeRemaining]);
-
-  useEffect(() => {
-    const checkClosed = setInterval(() => {
-      if (adWindow && adWindow.closed) {
-        clearInterval(checkClosed);
-        if (!adCompleted) {
-          setIsWatchingAd(false);
-          setTimeRemaining(5);
-          toast.error('Please complete the ad to continue', {
-            duration: 3000,
-            icon: '❌'
-          });
-        }
-      }
-    }, 1000);
-
-    return () => clearInterval(checkClosed);
-  }, [adWindow, adCompleted]);
-
   if (!isOpen) return null;
 
   const openAdWindow = () => {
-    const window = window.open(AD_URL, '_blank', 'width=800,height=600');
+    const newWindow = window.open(AD_URL, '_blank', 'width=800,height=600');
     
-    if (!window) {
+    if (!newWindow) {
       toast.error('Please allow popups to watch ads');
       return;
     }
     
-    setAdWindow(window);
+    setAdWindow(newWindow);
     setIsWatchingAd(true);
-    setTimeRemaining(5);
+    
+    // Simulate ad completion after 5 seconds
+    setTimeout(() => {
+      if (newWindow && !newWindow.closed) {
+        newWindow.close();
+      }
+      setIsWatchingAd(false);
+      setAdCompleted(true);
+      toast.success('Ad completed! You can now access your dashboard.', { 
+        duration: 3000,
+        icon: '✅'
+      });
+    }, 5000);
   };
 
   const handleComplete = () => {
@@ -78,7 +54,7 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-slideUp">
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl">
@@ -107,10 +83,10 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
           </div>
         ) : isWatchingAd ? (
           <div className="text-center py-6">
-            <Loader className="w-16 h-16 text-primary-600 mx-auto mb-4 animate-spin" />
+            <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <h3 className="text-xl font-bold mb-2">Watching Ad...</h3>
-            <p className="text-gray-600 mb-2">Please complete the ad in the popup window.</p>
-            <p className="text-sm text-gray-500">Time remaining: {timeRemaining}s</p>
+            <p className="text-gray-600 mb-2">Please wait while the ad completes.</p>
+            <p className="text-sm text-gray-500">This will take about 5 seconds</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -133,7 +109,7 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
 
             <button
               onClick={openAdWindow}
-              className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center space-x-2"
+              className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center space-x-2"
             >
               <Eye className="w-5 h-5" />
               <span>Watch Ad to Continue</span>
@@ -154,22 +130,6 @@ export const LoginTaskModal: React.FC<LoginTaskModalProps> = ({ isOpen, onComple
           This helps us keep POKEDOT free for everyone!
         </p>
       </div>
-
-      <style>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slideUp {
-          animation: slideUp 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 };

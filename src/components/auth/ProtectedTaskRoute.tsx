@@ -22,11 +22,13 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/task/status`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL}/task/status`;
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
       const data = await response.json();
       
       if (data.success) {
@@ -66,12 +68,15 @@ export const ProtectedTaskRoute: React.FC<ProtectedTaskRouteProps> = ({ children
       if (data.success) {
         setShowTaskModal(false);
         setNeedsTask(false);
+        // Force a refresh to get updated user data
         window.location.reload();
       } else {
         console.error('Failed to complete task:', data.message);
+        toast.error(data.message || 'Failed to complete task');
       }
     } catch (error) {
       console.error('Error completing task:', error);
+      toast.error('Failed to complete task. Please try again.');
     }
   };
 
